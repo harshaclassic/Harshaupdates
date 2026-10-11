@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en" class="overflow-x-hidden">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Harsha Classic</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Mobile-first locks to prevent viewport jitter */
+    html, body {
+      overflow-x: hidden;
+      width: 100%;
+      -webkit-tap-highlight-color: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    /* Smooth momentum scrolling for mobile */
+    .mobile-scroll {
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-x pan-y;
+    }
+
+    /* Freeze only the left Flat No column */
+    .sticky-left {
+      position: sticky;
+      left: 0;
+      z-index: 20;
+    }
+    th.sticky-left {
+      z-index: 30;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900 pb-12">
+
+  <!-- TOP NAVIGATION -->
+  <header class="bg-slate-900 text-white sticky top-0 z-50 shadow">
+    <div class="px-4 py-3 flex items-center justify-between">
+      <h1 class="text-base font-bold tracking-tight">Harsha Classic</h1>
+      <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">Resident Portal</span>
+    </div>
+    <div class="px-3 flex gap-2 border-t border-slate-800 bg-slate-950 py-2">
+      <button id="btn-tab-dashboard" onclick="showTab('dashboard')" 
+        class="flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white">
+        Dashboard
+      </button>
+      <button id="btn-tab-maintenance" onclick="showTab('maintenance')" 
+        class="flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white">
+        Maintenance
+      </button>
+      <button id="btn-tab-meetings" onclick="showTab('meetings')" 
+        class="flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white">
+        Meetings
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- TAB 1: DASHBOARD                           -->
+  <!-- ========================================== -->
+  <main id="tab-dashboard" class="p-3 space-y-4 max-w-md mx-auto w-full">
+
+    <!-- Financial Health -->
+    <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Financial Health</h2>
+      </div>
+      <div class="p-3 space-y-2.5">
+        
+        <!-- Available Balance Card -->
+        <div class="bg-blue-50 border border-blue-200 p-3 rounded space-y-2.5">
+          <div>
+            <span class="text-[11px] text-blue-900 font-bold uppercase block" id="fin-available-label">Available Balance</span>
+            <span class="text-2xl font-black text-blue-950 mt-0.5 block" id="fin-available">₹0</span>
+          </div>
+
+          <!-- Breakdown Sub-section -->
+          <div class="border-t border-blue-200/80 pt-2.5">
+            <span class="text-[10px] uppercase font-bold text-blue-800 tracking-wider block mb-1.5">Balance Breakdown</span>
+            <div class="grid grid-cols-3 gap-1.5 text-center">
+              <div class="bg-white border border-blue-100 p-2 rounded">
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Lord Ganesh Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-ganesh">₹0</span>
+              </div>
+              <div class="bg-white border border-blue-100 p-2 rounded">
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Builder Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-builder">₹0</span>
+              </div>
+              <div class="bg-white border border-blue-100 p-2 rounded">
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Maintenance Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-maintenance">₹0</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Amenities Status -->
+    <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Amenities Status</h2>
+      </div>
+      <div class="w-full overflow-x-auto mobile-scroll">
+        <table class="w-full text-left text-xs border-collapse whitespace-nowrap">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
+              <th class="p-2.5 border-r border-slate-200">Amenity</th>
+              <th class="p-2.5 border-r border-slate-200">Status</th>
+              <th class="p-2.5 border-r border-slate-200">Association POC</th>
+              <th class="p-2.5 border-r border-slate-200">Vendor Name</th>
+              <th class="p-2.5">Phone Number</th>
+            </tr>
+          </thead>
+          <tbody id="amenities-table-body" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- AMC Details -->
+    <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">AMC Details</h2>
+      </div>
+      <div class="w-full overflow-x-auto mobile-scroll">
+        <table class="w-full text-left text-xs border-collapse whitespace-nowrap">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
+              <th class="p-2.5 border-r border-slate-200">Amenity Name</th>
+              <th class="p-2.5">AMC End Date</th>
+            </tr>
+          </thead>
+          <tbody id="amc-table-body" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Important Dates of October -->
+    <section class="bg-white border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Important Dates of October</h2>
+      </div>
+      <div id="dates-container" class="divide-y divide-slate-200 text-xs"></div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- TAB 2: MAINTENANCE                         -->
+  <!-- ========================================== -->
+  <main id="tab-maintenance" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
+
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      
+      <!-- Card Header -->
+      <div class="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Maintenance</h2>
+        <span class="text-xs font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
+          Total Due: <span id="maint-grand-total-due">₹0</span>
+        </span>
+      </div>
+
+      <!-- Scrollable Table -->
+      <div class="w-full overflow-x-auto max-h-[70vh] mobile-scroll">
+        <table class="w-full text-xs border-collapse whitespace-nowrap text-center">
+          <thead class="bg-slate-800 text-white font-bold sticky top-0 z-40">
+            <tr id="maintenance-table-header"></tr>
+          </thead>
+          <tbody id="maintenance-table-body" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+
+      <div class="bg-slate-50 p-2 text-center text-[10px] text-slate-500 border-t border-slate-200">
+        👉 Swipe horizontally to view all special funds & months
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- TAB 3: MEETINGS                            -->
+  <!-- ========================================== -->
+  <main id="tab-meetings" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
+
+    <!-- Meeting Attendance Section -->
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 p-2.5">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Meetings Attendance</h2>
+      </div>
+
+      <div class="w-full overflow-x-auto max-h-[55vh] mobile-scroll">
+        <table class="w-full text-xs border-collapse whitespace-nowrap text-center">
+          <thead class="bg-slate-800 text-white font-bold sticky top-0 z-40">
+            <tr id="meetings-table-header"></tr>
+          </thead>
+          <tbody id="meetings-table-body" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Meeting Notes Section -->
+    <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 p-2.5">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Meeting Notes</h2>
+      </div>
+      <div class="w-full overflow-x-auto mobile-scroll">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold whitespace-nowrap">
+              <th class="p-2.5 border-r border-slate-200 w-28">Date</th>
+              <th class="p-2.5">Meeting Notes</th>
+            </tr>
+          </thead>
+          <tbody id="meeting-notes-body" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- DATA CONFIGURATION                         -->
+  <!-- ========================================== -->
+  <script>
+    // 1. FINANCIAL HEALTH DATA
+    const FINANCIAL_HEALTH = {
+      asOfDate: "10th October 2026",
+      availableBreakdown: {
+        ganeshAmount: 42481,
+        builderAmount: 0,
+        maintenanceAmount: 54791
+      },
+      availableBalance: 97272
+    };
+
+    // 2. AMENITIES STATUS DATA
+    const AMENITIES = [
+      {
+        amenity: "Generator",
+        status: "Operational",
+        associationPoc: "Yet to update",
+        vendorName: "Yet to update",
+        vendorPhonenumber: "Yet to update"
+      },
+      {
+        amenity: "Softner",
+        status: "Under Maintenance",
+        associationPoc: "Yet to update",
+        vendorName: "Yet to update",
+        vendorPhonenumber: "Yet to update"
+      },
+      {
+        amenity: "Lift 1",
+        status: "Operational",
+        associationPoc: "Yet to update",
+        vendorName: "Yet to update",
+        vendorPhonenumber: "Yet to update"
+      },
+      {
+        amenity: "Lift 2",
+        status: "Under Maintenance",
+        associationPoc: "Yet to update",
+        vendorName: "Yet to update",
+        vendorPhonenumber: "Yet to update"
+      },
+      {
+        amenity: "STP",
+        status: "Operational",
+        associationPoc: "Yet to update",
+        vendorName: "Yet to update",
+        vendorPhonenumber: "Yet to update"
+      },
+      {
+        amenity: "Water Motor",
+        status: "Operational",
+        associationPoc: "Yet to update",
+        vendorName: "Yet to update",
+        vendorPhonenumber: "Yet to update"
+      }
+    ];
+
+    // 3. AMC DETAILS DATA
+    const AMC_DETAILS = [
+      { amenity: "Generator", endDate: "Yet to update" },
+      { amenity: "Lift 1", endDate: "Yet to update" },
+      { amenity: "Lift 2", endDate: "Yet to update" },
+      { amenity: "Softner", endDate: "Yet to update" }
+    ];
+
+    // 4. IMPORTANT DATES FOR THIS MONTH
+    const IMPORTANT_DATES = [
+      { date: "Oct 11, 2026", event: "Handover is completed" },
+      { date: "Oct 12, 2026", event: "Monthly Maintenance Due Date" }
+    ];
+
+    // 5. MAINTENANCE MONTHS (Title Case)
+    const MONTHS = [
+      "September 2026", "October 2026", "November 2026", "December 2026",
+      "January 2027", "February 2027", "March 2027", "April 2027",
+      "May 2027", "June 2027", "July 2027", "August 2027",
+      "September 2027", "October 2027"
+    ];
+
+    // 6. SPECIAL LEVIES & CORPUS AMOUNTS
+    const SOFTNER_AMOUNT = 15000;
+    const GATE_APP_AMOUNT = 600;
+    const EMERGENCY_FUND = 5000;
+
+    const SPECIAL_COLUMNS = [
+      { key: "softner", label: "Softner Amount", rate: SOFTNER_AMOUNT },
+      { key: "gateApp", label: "Gate App Amount", rate: GATE_APP_AMOUNT },
+      { key: "emergency", label: "Emergency Fund", rate: EMERGENCY_FUND }
+    ];
+
+    // 7. ALL FLATS GENERATOR
+    function getAllFlats() {
+      const list = [];
+      for (let i = 1; i <= 9; i++) list.push(`G${i}`);
+      for (let f = 1; f <= 5; f++) {
+        for (let u = 1; u <= 11; u++) {
+          list.push(`${f}${u < 10 ? '0' + u : u}`);
+        }
+      }
+      return list;
+    }
+
+    const RATE = 2500;
+
+    // 8. UNSOLD / BUILDER FLATS (Excluded from occupied owners dues calculation)
+    const UNSOLD_FLATS = [
+      //"G8", "G9", "110", "111", "210", "211", "311", "410", "411", "511"
+    ];
+
+    // Monthly dues defaulters (applies to occupied flats)
+    const UNPAID_FLATS = {
+    /*  "G3": { "September 2026": RATE, "October 2026": RATE },
+      "105": { "October 2026": RATE },
+      "204": { "September 2026": RATE, "October 2026": RATE },
+      "308": { "October 2026": RATE },
+      "402": { "October 2026": RATE },
+      "510": { "September 2026": RATE, "October 2026": RATE } */
+    };
+
+    // Special charges defaulters (defaults to Paid unless listed here)
+    const UNPAID_SPECIAL = {
+   /*   "G3": { "softner": SOFTNER_AMOUNT, "emergency": EMERGENCY_FUND },
+      "105": { "gateApp": GATE_APP_AMOUNT },
+      "204": { "softner": SOFTNER_AMOUNT } */
+    };
+
+    // 9. MEETINGS ATTENDANCE DATA (Rescheduled to Nov 8, 2026, status empty)
+    const meetings = [
+      {
+        name: "General Body Meeting",
+        scheduledDate: "Nov 8, 2026",
+        attendedFlats: []
+      }
+    ];
+
+    // 10. REAL MEETING NOTES DATA
+    const MEETING_NOTES = [
+      {
+        date: "Oct 11, 2026",
+        notes: "Formal handover of community accounts and assets completed smoothly by the previous association. The incoming committee is currently reviewing the records and will follow up with the outgoing team if any clarifications are required."
+      }
+    ];
+
+    // Tab Switcher
+    function showTab(tabName) {
+      const dash = document.getElementById('tab-dashboard');
+      const maint = document.getElementById('tab-maintenance');
+      const meet = document.getElementById('tab-meetings');
+      
+      const btnDash = document.getElementById('btn-tab-dashboard');
+      const btnMaint = document.getElementById('btn-tab-maintenance');
+      const btnMeet = document.getElementById('btn-tab-meetings');
+
+      dash.classList.add('hidden');
+      maint.classList.add('hidden');
+      meet.classList.add('hidden');
+
+      btnDash.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
+      btnMaint.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
+      btnMeet.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
+
+      if (tabName === 'dashboard') {
+        dash.classList.remove('hidden');
+        btnDash.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
+      } else if (tabName === 'maintenance') {
+        maint.classList.remove('hidden');
+        btnMaint.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
+      } else if (tabName === 'meetings') {
+        meet.classList.remove('hidden');
+        btnMeet.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
+      }
+    }
+
+    // Explicit INR (₹) Formatter
+    function formatINR(val) {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        currencyDisplay: 'narrowSymbol',
+        maximumFractionDigits: 0
+      }).format(val);
+    }
+
+    function init() {
+      // 1. Render Financial Health & Breakout
+      const { ganeshAmount, builderAmount, maintenanceAmount } = FINANCIAL_HEALTH.availableBreakdown;
+      const totalAvailable = FINANCIAL_HEALTH.availableBalance || (ganeshAmount + builderAmount + maintenanceAmount);
+      
+      document.getElementById('fin-available-label').innerText = `Available Balance as of ${FINANCIAL_HEALTH.asOfDate}`;
+      document.getElementById('fin-available').innerText = formatINR(totalAvailable);
+      document.getElementById('fin-breakdown-ganesh').innerText = formatINR(ganeshAmount);
+      document.getElementById('fin-breakdown-builder').innerText = formatINR(builderAmount);
+      document.getElementById('fin-breakdown-maintenance').innerText = formatINR(maintenanceAmount);
+
+      // 2. Render Amenities Status
+      const amBody = document.getElementById('amenities-table-body');
+      amBody.innerHTML = '';
+      AMENITIES.forEach(a => {
+        const isMaint = a.status === "Under Maintenance";
+        const statusBadge = isMaint
+          ? `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-semibold text-[10px]">${a.status}</span>`
+          : `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded font-semibold text-[10px]">${a.status}</span>`;
+
+        amBody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${a.amenity}</td>
+            <td class="p-2.5 border-r border-slate-200">${statusBadge}</td>
+            <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.associationPoc}</td>
+            <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.vendorName}</td>
+            <td class="p-2.5 text-slate-500 italic">${a.vendorPhonenumber}</td>
+          </tr>
+        `;
+      });
+
+      // 3. Render AMC Details
+      const amcBody = document.getElementById('amc-table-body');
+      amcBody.innerHTML = '';
+      AMC_DETAILS.forEach(item => {
+        amcBody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${item.amenity}</td>
+            <td class="p-2.5 text-slate-500 italic">
+              <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px]">${item.endDate}</span>
+            </td>
+          </tr>
+        `;
+      });
+
+      // 4. Render Important Dates
+      const dtCont = document.getElementById('dates-container');
+      dtCont.innerHTML = '';
+      IMPORTANT_DATES.forEach(d => {
+        dtCont.innerHTML += `
+          <div class="p-2.5 flex items-center justify-between">
+            <span class="font-bold text-slate-900">${d.event}</span>
+            <span class="bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono text-[11px] font-semibold">${d.date}</span>
+          </div>
+        `;
+      });
+
+      // 5. Render Maintenance Table Header & Body
+      const maintHeader = document.getElementById('maintenance-table-header');
+      let maintHeaderHtml = `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">Flat No</th>`;
+      maintHeaderHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[90px] text-right bg-slate-850 text-indigo-100">Total Due</th>`;
+      
+      // Special Columns immediately next to Total Due
+      SPECIAL_COLUMNS.forEach(col => {
+        maintHeaderHtml += `
+          <th class="p-2 border-r border-slate-700 min-w-[125px] bg-slate-850 text-indigo-200">
+            <div>${col.label}</div>
+            <div class="text-[9px] text-slate-400 font-normal">(${formatINR(col.rate)})</div>
+          </th>`;
+      });
+
+      // Monthly columns follow
+      MONTHS.forEach(m => {
+        maintHeaderHtml += `<th class="p-2 border-r border-slate-700 min-w-[105px]">${m}</th>`;
+      });
+      
+      maintHeader.innerHTML = maintHeaderHtml;
+
+      const flats = getAllFlats();
+      const mBody = document.getElementById('maintenance-table-body');
+      mBody.innerHTML = '';
+
+      let grandTotalDue = 0;
+
+      flats.forEach(flat => {
+        const isUnsold = UNSOLD_FLATS.includes(flat);
+        let totalDue = 0;
+        let specialTds = '';
+        let monthTds = '';
+
+        if (isUnsold) {
+          SPECIAL_COLUMNS.forEach(() => {
+            specialTds += `<td class="p-2 border-r border-amber-200/70"><span class="text-amber-800 font-semibold text-[11px]">Unsold</span></td>`;
+          });
+          MONTHS.forEach(() => {
+            monthTds += `<td class="p-2 border-r border-amber-200/70"><span class="text-amber-800 font-semibold text-[11px]">Unsold</span></td>`;
+          });
+
+          mBody.innerHTML += `
+            <tr class="bg-amber-50/70 hover:bg-amber-100/60">
+              <td class="p-2 font-bold text-amber-950 border-r border-amber-200 sticky-left bg-amber-100 text-left">
+                ${flat}
+                <span class="block text-[8px] text-amber-900 font-bold uppercase tracking-wider">Unsold</span>
+              </td>
+              <td class="p-2 font-bold border-r border-amber-200 text-right text-slate-400">
+                ₹0
+              </td>
+              ${specialTds}
+              ${monthTds}
+            </tr>
+          `;
+        } else {
+          // Check 3 special columns
+          SPECIAL_COLUMNS.forEach(col => {
+            let specialCell = `<span class="text-emerald-600 font-bold">Paid</span>`;
+            if (UNPAID_SPECIAL[flat] && UNPAID_SPECIAL[flat][col.key]) {
+              const dueAmt = UNPAID_SPECIAL[flat][col.key];
+              totalDue += dueAmt;
+              specialCell = `<span class="text-rose-600 font-bold">${formatINR(dueAmt)}</span>`;
+            }
+            specialTds += `<td class="p-2 border-r border-slate-200 bg-slate-50/40">${specialCell}</td>`;
+          });
+
+          // Check months
+          MONTHS.forEach(m => {
+            let cell = '<span class="text-slate-300">-</span>';
+            if (m === "September 20266" || m === "October 20266") {
+              if (UNPAID_FLATS[flat] && UNPAID_FLATS[flat][m]) {
+                totalDue += UNPAID_FLATS[flat][m];
+                cell = `<span class="text-rose-600 font-bold">${formatINR(UNPAID_FLATS[flat][m])}</span>`;
+              } else {
+                cell = `<span class="text-emerald-600 font-bold">Paid</span>`;
+              }
+            }
+            monthTds += `<td class="p-2 border-r border-slate-200">${cell}</td>`;
+          });
+
+          grandTotalDue += totalDue;
+
+          mBody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">
+                ${flat}
+              </td>
+              <td class="p-2.5 font-bold border-r border-slate-200 text-right ${totalDue > 0 ? 'text-rose-600' : 'text-emerald-600'}">
+                ${formatINR(totalDue)}
+              </td>
+              ${specialTds}
+              ${monthTds}
+            </tr>
+          `;
+        }
+      });
+
+      document.getElementById('maint-grand-total-due').innerText = formatINR(grandTotalDue);
+
+      // 6. Render Meetings Attendance Table Header & Body
+      const meetHeader = document.getElementById('meetings-table-header');
+      const meetBody = document.getElementById('meetings-table-body');
+
+      let meetHeaderHtml = `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">Flat No</th>`;
+      meetHeaderHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[75px] text-right bg-slate-850 text-indigo-100">Attended</th>`;
+
+      meetings.forEach(m => {
+        meetHeaderHtml += `
+          <th class="p-2 border-r border-slate-700 min-w-[150px] text-center">
+            <div class="font-bold">${m.name}</div>
+            <div class="text-[9px] text-slate-300 font-normal mt-0.5">Scheduled: ${m.scheduledDate}</div>
+          </th>`;
+      });
+      meetHeader.innerHTML = meetHeaderHtml;
+
+      meetBody.innerHTML = '';
+      flats.forEach(flat => {
+        const isUnsold = UNSOLD_FLATS.includes(flat);
+        let meetingTds = '';
+
+        if (isUnsold) {
+          meetings.forEach(() => {
+            meetingTds += `<td class="p-2 border-r border-amber-200/70 text-amber-800 font-semibold text-[11px]">Unsold</td>`;
+          });
+
+          meetBody.innerHTML += `
+            <tr class="bg-amber-50/70 hover:bg-amber-100/60">
+              <td class="p-2 font-bold text-amber-950 border-r border-amber-200 sticky-left bg-amber-100 text-left">
+                ${flat}
+                <span class="block text-[8px] text-amber-900 font-bold uppercase tracking-wider">Unsold</span>
+              </td>
+              <td class="p-2 font-bold border-r border-amber-200 text-right text-slate-400">
+                -
+              </td>
+              ${meetingTds}
+            </tr>
+          `;
+        } else {
+          // Status kept empty (-) until the meeting occurs
+          meetings.forEach(() => {
+            meetingTds += `<td class="p-2 border-r border-slate-200 text-slate-400 font-medium">-</td>`;
+          });
+
+          meetBody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">
+                ${flat}
+              </td>
+              <td class="p-2.5 font-bold border-r border-slate-200 text-right text-slate-700 font-mono">
+                0/0
+              </td>
+              ${meetingTds}
+            </tr>
+          `;
+        }
+      });
+
+      // 7. Render Meeting Notes
+      const notesBody = document.getElementById('meeting-notes-body');
+      notesBody.innerHTML = '';
+      MEETING_NOTES.forEach(n => {
+        notesBody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 border-r border-slate-200 align-top">
+              <span class="bg-slate-100 border border-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold whitespace-nowrap">${n.date}</span>
+            </td>
+            <td class="p-2.5 text-slate-800 leading-relaxed text-[11px]">${n.notes}</td>
+          </tr>
+        `;
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
