@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Harsha Classic</title>
+  <title>Harsha Classic - Resident Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Mobile-first locks to prevent viewport jitter */
     html, body {
       overflow-x: hidden;
       width: 100%;
@@ -14,13 +13,11 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     
-    /* Smooth momentum scrolling for mobile */
     .mobile-scroll {
       -webkit-overflow-scrolling: touch;
       touch-action: pan-x pan-y;
     }
 
-    /* Freeze only the left Flat No column */
     .sticky-left {
       position: sticky;
       left: 0;
@@ -36,9 +33,19 @@
   <!-- TOP NAVIGATION -->
   <header class="bg-slate-900 text-white sticky top-0 z-50 shadow">
     <div class="px-4 py-3 flex items-center justify-between">
-      <h1 class="text-base font-bold tracking-tight">Harsha Classic</h1>
-      <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">Resident Portal</span>
+      <div class="flex items-center gap-2">
+        <h1 class="text-base font-bold tracking-tight">Harsha Classic</h1>
+        <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">Resident Portal</span>
+      </div>
+
+      <button onclick="toggleMenu()" class="p-1.5 rounded-lg bg-slate-800 text-slate-200 hover:text-white focus:outline-none border border-slate-700" aria-label="Toggle Menu">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+        </svg>
+      </button>
     </div>
+
+    <!-- Main Navigation Tabs -->
     <div class="px-3 flex gap-2 border-t border-slate-800 bg-slate-950 py-2">
       <button id="btn-tab-dashboard" onclick="showTab('dashboard')" 
         class="flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white">
@@ -55,6 +62,55 @@
     </div>
   </header>
 
+  <!-- SLIDE-OVER MENU DRAWER -->
+  <div id="drawer-backdrop" onclick="toggleMenu()" class="fixed inset-0 bg-slate-900/60 z-50 hidden backdrop-blur-sm transition-opacity"></div>
+  <aside id="drawer-menu" class="fixed top-0 right-0 w-64 h-full bg-slate-900 text-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+    <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+      <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Quick Menu</span>
+      <button onclick="toggleMenu()" class="text-slate-400 hover:text-white p-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <nav class="p-3 space-y-1 flex-1 text-xs font-medium">
+      <button onclick="showTab('dashboard'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2">
+        <span>📊</span> Dashboard
+      </button>
+      <button onclick="showTab('maintenance'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2">
+        <span>💰</span> Maintenance
+      </button>
+      <button onclick="showTab('meetings'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2">
+        <span>📅</span> Meetings
+      </button>
+      
+      <div class="border-t border-slate-800 my-2 pt-2"></div>
+
+      <button onclick="showTab('directory'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
+        <span>📖</span> Owner Directory
+      </button>
+      <button onclick="showTab('quick-help'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
+        <span>🆘</span> Quick Help
+      </button>
+      <button onclick="showTab('feedback'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
+        <span>💬</span> Complaints & Feedback
+      </button>
+    </nav>
+    
+    <div class="p-3 border-t border-slate-800 text-[10px] text-slate-500 text-center">
+      Harsha Classic Association v2.0
+    </div>
+  </aside>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loading-overlay" class="fixed inset-0 bg-slate-900/40 z-40 flex items-center justify-center backdrop-blur-xs">
+    <div class="bg-white rounded-xl shadow-lg p-4 flex items-center gap-3 border border-slate-200">
+      <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <span class="text-xs font-semibold text-slate-800">Loading live data from Google Sheet...</span>
+    </div>
+  </div>
+
   <!-- ========================================== -->
   <!-- TAB 1: DASHBOARD                           -->
   <!-- ========================================== -->
@@ -66,34 +122,43 @@
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Financial Health</h2>
       </div>
       <div class="p-3 space-y-2.5">
-        
-        <!-- Available Balance Card -->
         <div class="bg-blue-50 border border-blue-200 p-3 rounded space-y-2.5">
           <div>
             <span class="text-[11px] text-blue-900 font-bold uppercase block" id="fin-available-label">Available Balance</span>
-            <span class="text-2xl font-black text-blue-950 mt-0.5 block" id="fin-available">₹0</span>
+            <span class="text-2xl font-black text-blue-950 mt-0.5 block" id="fin-available">...</span>
           </div>
 
-          <!-- Breakdown Sub-section -->
           <div class="border-t border-blue-200/80 pt-2.5">
             <span class="text-[10px] uppercase font-bold text-blue-800 tracking-wider block mb-1.5">Balance Breakdown</span>
             <div class="grid grid-cols-3 gap-1.5 text-center">
               <div class="bg-white border border-blue-100 p-2 rounded">
-                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Lord Ganesh Amount</span>
-                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-ganesh">₹0</span>
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight" id="label-fin-ganesh">Lord Ganesh Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-ganesh">...</span>
               </div>
               <div class="bg-white border border-blue-100 p-2 rounded">
-                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Builder Amount</span>
-                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-builder">₹0</span>
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight" id="label-fin-builder">Builder Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-builder">...</span>
               </div>
               <div class="bg-white border border-blue-100 p-2 rounded">
-                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Maintenance Amount</span>
-                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-maintenance">₹0</span>
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight" id="label-fin-maint">Maintenance Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-maintenance">...</span>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </section>
 
+    <!-- Staff Salaries & Recurring Expenses -->
+    <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2 flex items-center justify-between">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Staff Salaries & Recurring Expenses</h2>
+        <span class="text-[11px] font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded" id="exp-total-badge">Total: ...</span>
+      </div>
+      <div class="divide-y divide-slate-100 text-xs" id="expenses-list-container"></div>
+      <div class="bg-slate-50 border-t border-slate-200 p-2.5 flex items-center justify-between text-xs font-bold text-slate-900">
+        <span>Total Monthly Overhead</span>
+        <span class="text-indigo-700 text-sm font-extrabold" id="exp-grand-total">...</span>
       </div>
     </section>
 
@@ -113,7 +178,7 @@
               <th class="p-2.5">Phone Number</th>
             </tr>
           </thead>
-          <tbody id="amenities-table-body" class="divide-y divide-slate-200"></tbody>
+          <tbody id="amenities-table-body" class="divide-y border-slate-200"></tbody>
         </table>
       </div>
     </section>
@@ -128,7 +193,8 @@
           <thead>
             <tr class="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold">
               <th class="p-2.5 border-r border-slate-200">Amenity Name</th>
-              <th class="p-2.5">AMC End Date</th>
+              <th class="p-2.5 border-r border-slate-200">AMC End Date</th>
+              <th class="p-2.5">Estimate</th>
             </tr>
           </thead>
           <tbody id="amc-table-body" class="divide-y divide-slate-200"></tbody>
@@ -136,33 +202,22 @@
       </div>
     </section>
 
-    <!-- Important Dates of October -->
-    <section class="bg-white border-2 border-slate-200 rounded-lg shadow-sm overflow-hidden">
-      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2">
-        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Important Dates of October</h2>
-      </div>
-      <div id="dates-container" class="divide-y divide-slate-200 text-xs"></div>
-    </section>
-
   </main>
 
   <!-- ========================================== -->
   <!-- TAB 2: MAINTENANCE                         -->
   <!-- ========================================== -->
-  <main id="tab-maintenance" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
+  <main id="tab-maintenance" class="p-3 hidden max-w-md mx-auto space-y-4 w-full">
 
     <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-      
-      <!-- Card Header -->
       <div class="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between">
-        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Maintenance</h2>
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Maintenance Dues</h2>
         <span class="text-xs font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
-          Total Due: <span id="maint-grand-total-due">₹0</span>
+          Total Due: <span id="maint-grand-total-due">...</span>
         </span>
       </div>
 
-      <!-- Scrollable Table -->
-      <div class="w-full overflow-x-auto max-h-[70vh] mobile-scroll">
+      <div class="w-full overflow-x-auto max-h-[60vh] mobile-scroll">
         <table class="w-full text-xs border-collapse whitespace-nowrap text-center">
           <thead class="bg-slate-800 text-white font-bold sticky top-0 z-40">
             <tr id="maintenance-table-header"></tr>
@@ -172,9 +227,34 @@
       </div>
 
       <div class="bg-slate-50 p-2 text-center text-[10px] text-slate-500 border-t border-slate-200">
-        👉 Swipe horizontally to view all special funds & months
+        👉 Swipe horizontally to view special funds & monthly dues
+      </div>
+    </div>
+
+    <!-- Builder Pending Amount Section -->
+    <div class="bg-white border border-amber-300 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-amber-100/80 border-b border-amber-200 p-2.5 flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span class="text-amber-700">🏗️</span>
+          <h2 class="text-xs font-extrabold uppercase tracking-wide text-amber-950">Builder Pending Amount</h2>
+        </div>
+        <span class="text-xs font-extrabold text-amber-900 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded">
+          Total Due: <span id="builder-grand-total-due">...</span>
+        </span>
       </div>
 
+      <div class="w-full overflow-x-auto mobile-scroll">
+        <table class="w-full text-xs border-collapse whitespace-nowrap text-center">
+          <thead class="bg-slate-800 text-white font-bold">
+            <tr id="builder-table-header"></tr>
+          </thead>
+          <tbody id="builder-table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="bg-amber-50/60 p-2 text-center text-[10px] text-amber-800 border-t border-amber-200">
+        ℹ️ Total pending amounts owed directly by the builder to the society
+      </div>
     </div>
 
   </main>
@@ -184,7 +264,6 @@
   <!-- ========================================== -->
   <main id="tab-meetings" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
 
-    <!-- Meeting Attendance Section -->
     <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-slate-100 border-b border-slate-200 p-2.5">
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Meetings Attendance</h2>
@@ -200,7 +279,6 @@
       </div>
     </div>
 
-    <!-- Meeting Notes Section -->
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-slate-100 border-b border-slate-200 p-2.5">
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Meeting Notes</h2>
@@ -221,419 +299,504 @@
   </main>
 
   <!-- ========================================== -->
-  <!-- DATA CONFIGURATION                         -->
+  <!-- TAB 4: OWNER DIRECTORY                     -->
+  <!-- ========================================== -->
+  <main id="tab-directory" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Owner Directory</h2>
+        <span class="text-[10px] text-slate-500 font-medium">Harsha Classic Residents</span>
+      </div>
+
+      <div class="w-full overflow-x-auto max-h-[65vh] mobile-scroll">
+        <table class="w-full text-left text-xs border-collapse whitespace-nowrap">
+          <thead class="bg-slate-800 text-white font-bold sticky top-0 z-40">
+            <tr>
+              <th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900">Flat No</th>
+              <th class="p-2.5 border-r border-slate-700">Owner Name</th>
+              <th class="p-2.5 border-r border-slate-700">Phone Number</th>
+              <th class="p-2.5 border-r border-slate-700">Occupied By</th>
+              <th class="p-2.5 border-r border-slate-700">Tenant Name</th>
+              <th class="p-2.5 border-r border-slate-700">Phone Number</th>
+              <th class="p-2.5">Vehicle Numbers</th>
+            </tr>
+          </thead>
+          <tbody id="directory-table-body" class="divide-y divide-slate-200"></tbody>
+        </table>
+      </div>
+
+      <div class="bg-slate-50 p-2 text-center text-[10px] text-slate-500 border-t border-slate-200">
+        👉 Swipe horizontally to view full tenant and vehicle details
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- TAB 5: QUICK HELP                          -->
+  <!-- ========================================== -->
+  <main id="tab-quick-help" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
+    <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden p-3.5 space-y-3">
+      <div class="border-b border-slate-200 pb-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800 flex items-center gap-1.5">
+          <span>🆘</span> Quick Help
+        </h2>
+        <p class="text-[11px] text-slate-500 mt-0.5">Essential on-demand technician contacts for Harsha Classic.</p>
+      </div>
+
+      <div class="space-y-2.5" id="quick-help-list"></div>
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- TAB 6: COMPLAINTS AND FEEDBACK             -->
+  <!-- ========================================== -->
+  <main id="tab-feedback" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
+    <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden p-3.5 space-y-3">
+      <div class="border-b border-slate-200 pb-2">
+        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Complaints & Feedback</h2>
+        <p class="text-[11px] text-slate-500 mt-0.5">Submit concerns or general queries directly to the association team.</p>
+      </div>
+
+      <form id="feedback-form" onsubmit="handleFeedbackSubmit(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Category</label>
+          <select id="fb-type" onchange="handleCategoryChange()" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none bg-white font-semibold">
+            <option value="Complaint">Complaint</option>
+            <option value="Feedback">Feedback</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1" id="fb-flat-label">
+            Flat Number <span class="text-rose-500" id="fb-flat-req">*</span>
+          </label>
+          <input type="text" id="fb-flat" required placeholder="e.g. G3 or 204" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 mb-1">Description <span class="text-rose-500">*</span></label>
+          <textarea id="fb-message" rows="3" required placeholder="Describe your concern or feedback here..." class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
+        </div>
+
+        <button type="submit" id="fb-btn" class="w-full py-2.5 bg-indigo-600 text-white font-bold rounded shadow hover:bg-indigo-700 transition-colors">
+          Submit
+        </button>
+      </form>
+
+      <div id="fb-status" class="hidden text-center text-xs p-2.5 rounded font-semibold"></div>
+    </section>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- GOOGLE SHEETS LIVE DATA INTEGRATION        -->
   <!-- ========================================== -->
   <script>
-    // 1. FINANCIAL HEALTH DATA
-    const FINANCIAL_HEALTH = {
-      asOfDate: "10th October 2026",
-      availableBreakdown: {
-        ganeshAmount: 42481,
-        builderAmount: 0,
-        maintenanceAmount: 54791
-      },
-      availableBalance: 97272
-    };
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0agDssuk6_uYtlbToS5a5GfxUVJUr_TUORXnYnhGgvX5AviCnpUrIDEznuZbYTK7PaQ/exec";
 
-    // 2. AMENITIES STATUS DATA
-    const AMENITIES = [
-      {
-        amenity: "Generator",
-        status: "Operational",
-        associationPoc: "Yet to update",
-        vendorName: "Yet to update",
-        vendorPhonenumber: "Yet to update"
-      },
-      {
-        amenity: "Softner",
-        status: "Under Maintenance",
-        associationPoc: "Yet to update",
-        vendorName: "Yet to update",
-        vendorPhonenumber: "Yet to update"
-      },
-      {
-        amenity: "Lift 1",
-        status: "Operational",
-        associationPoc: "Yet to update",
-        vendorName: "Yet to update",
-        vendorPhonenumber: "Yet to update"
-      },
-      {
-        amenity: "Lift 2",
-        status: "Under Maintenance",
-        associationPoc: "Yet to update",
-        vendorName: "Yet to update",
-        vendorPhonenumber: "Yet to update"
-      },
-      {
-        amenity: "STP",
-        status: "Operational",
-        associationPoc: "Yet to update",
-        vendorName: "Yet to update",
-        vendorPhonenumber: "Yet to update"
-      },
-      {
-        amenity: "Water Motor",
-        status: "Operational",
-        associationPoc: "Yet to update",
-        vendorName: "Yet to update",
-        vendorPhonenumber: "Yet to update"
-      }
-    ];
-
-    // 3. AMC DETAILS DATA
-    const AMC_DETAILS = [
-      { amenity: "Generator", endDate: "Yet to update" },
-      { amenity: "Lift 1", endDate: "Yet to update" },
-      { amenity: "Lift 2", endDate: "Yet to update" },
-      { amenity: "Softner", endDate: "Yet to update" }
-    ];
-
-    // 4. IMPORTANT DATES FOR THIS MONTH
-    const IMPORTANT_DATES = [
-      { date: "Oct 11, 2026", event: "Handover is completed" },
-      { date: "Oct 12, 2026", event: "Monthly Maintenance Due Date" }
-    ];
-
-    // 5. MAINTENANCE MONTHS (Title Case)
-    const MONTHS = [
-      "September 2026", "October 2026", "November 2026", "December 2026",
-      "January 2027", "February 2027", "March 2027", "April 2027",
-      "May 2027", "June 2027", "July 2027", "August 2027",
-      "September 2027", "October 2027"
-    ];
-
-    // 6. SPECIAL LEVIES & CORPUS AMOUNTS
-    const SOFTNER_AMOUNT = 15000;
-    const GATE_APP_AMOUNT = 600;
-    const EMERGENCY_FUND = 5000;
-
-    const SPECIAL_COLUMNS = [
-      { key: "softner", label: "Softner Amount", rate: SOFTNER_AMOUNT },
-      { key: "gateApp", label: "Gate App Amount", rate: GATE_APP_AMOUNT },
-      { key: "emergency", label: "Emergency Fund", rate: EMERGENCY_FUND }
-    ];
-
-    // 7. ALL FLATS GENERATOR
-    function getAllFlats() {
-      const list = [];
-      for (let i = 1; i <= 9; i++) list.push(`G${i}`);
-      for (let f = 1; f <= 5; f++) {
-        for (let u = 1; u <= 11; u++) {
-          list.push(`${f}${u < 10 ? '0' + u : u}`);
-        }
-      }
-      return list;
+    function toggleMenu() {
+      const drawer = document.getElementById('drawer-menu');
+      const backdrop = document.getElementById('drawer-backdrop');
+      drawer.classList.toggle('translate-x-full');
+      backdrop.classList.toggle('hidden');
     }
 
-    const RATE = 2500;
-
-    // 8. UNSOLD / BUILDER FLATS (Excluded from occupied owners dues calculation)
-    const UNSOLD_FLATS = [
-      //"G8", "G9", "110", "111", "210", "211", "311", "410", "411", "511"
-    ];
-
-    // Monthly dues defaulters (applies to occupied flats)
-    const UNPAID_FLATS = {
-    /*  "G3": { "September 2026": RATE, "October 2026": RATE },
-      "105": { "October 2026": RATE },
-      "204": { "September 2026": RATE, "October 2026": RATE },
-      "308": { "October 2026": RATE },
-      "402": { "October 2026": RATE },
-      "510": { "September 2026": RATE, "October 2026": RATE } */
-    };
-
-    // Special charges defaulters (defaults to Paid unless listed here)
-    const UNPAID_SPECIAL = {
-   /*   "G3": { "softner": SOFTNER_AMOUNT, "emergency": EMERGENCY_FUND },
-      "105": { "gateApp": GATE_APP_AMOUNT },
-      "204": { "softner": SOFTNER_AMOUNT } */
-    };
-
-    // 9. MEETINGS ATTENDANCE DATA (Rescheduled to Nov 8, 2026, status empty)
-    const meetings = [
-      {
-        name: "General Body Meeting",
-        scheduledDate: "Nov 8, 2026",
-        attendedFlats: []
-      }
-    ];
-
-    // 10. REAL MEETING NOTES DATA
-    const MEETING_NOTES = [
-      {
-        date: "Oct 11, 2026",
-        notes: "Formal handover of community accounts and assets completed smoothly by the previous association. The incoming committee is currently reviewing the records and will follow up with the outgoing team if any clarifications are required."
-      }
-    ];
-
-    // Tab Switcher
     function showTab(tabName) {
-      const dash = document.getElementById('tab-dashboard');
-      const maint = document.getElementById('tab-maintenance');
-      const meet = document.getElementById('tab-meetings');
-      
+      const tabs = ['dashboard', 'maintenance', 'meetings', 'directory', 'quick-help', 'feedback'];
+      tabs.forEach(t => {
+        const el = document.getElementById(`tab-${t}`);
+        if (el) el.classList.add('hidden');
+      });
+
       const btnDash = document.getElementById('btn-tab-dashboard');
       const btnMaint = document.getElementById('btn-tab-maintenance');
       const btnMeet = document.getElementById('btn-tab-meetings');
 
-      dash.classList.add('hidden');
-      maint.classList.add('hidden');
-      meet.classList.add('hidden');
+      if (btnDash) btnDash.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
+      if (btnMaint) btnMaint.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
+      if (btnMeet) btnMeet.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
 
-      btnDash.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
-      btnMaint.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
-      btnMeet.className = "flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white";
+      const activeTab = document.getElementById(`tab-${tabName}`);
+      if (activeTab) activeTab.classList.remove('hidden');
 
-      if (tabName === 'dashboard') {
-        dash.classList.remove('hidden');
-        btnDash.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
-      } else if (tabName === 'maintenance') {
-        maint.classList.remove('hidden');
-        btnMaint.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
-      } else if (tabName === 'meetings') {
-        meet.classList.remove('hidden');
-        btnMeet.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
+      if (tabName === 'dashboard' && btnDash) btnDash.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
+      if (tabName === 'maintenance' && btnMaint) btnMaint.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
+      if (tabName === 'meetings' && btnMeet) btnMeet.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
+    }
+
+    function handleCategoryChange() {
+      const cat = document.getElementById('fb-type').value;
+      const flatInput = document.getElementById('fb-flat');
+      const flatReq = document.getElementById('fb-flat-req');
+
+      if (cat === "Feedback") {
+        flatInput.removeAttribute('required');
+        flatReq.innerText = "(Optional)";
+        flatReq.className = "text-slate-400 font-normal";
+      } else {
+        flatInput.setAttribute('required', 'required');
+        flatReq.innerText = "*";
+        flatReq.className = "text-rose-500 font-bold";
       }
     }
 
-    // Explicit INR (₹) Formatter
     function formatINR(val) {
-      return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        currencyDisplay: 'narrowSymbol',
-        maximumFractionDigits: 0
-      }).format(val);
+      if (val === undefined || val === null || val === "" || isNaN(Number(val))) {
+        return val || "₹0";
+      }
+      return new Intl.NumberFormat('en-IN', { 
+        style: 'currency', 
+        currency: 'INR', 
+        currencyDisplay: 'narrowSymbol', 
+        maximumFractionDigits: 0 
+      }).format(Number(val));
     }
 
-    function init() {
-      // 1. Render Financial Health & Breakout
-      const { ganeshAmount, builderAmount, maintenanceAmount } = FINANCIAL_HEALTH.availableBreakdown;
-      const totalAvailable = FINANCIAL_HEALTH.availableBalance || (ganeshAmount + builderAmount + maintenanceAmount);
-      
-      document.getElementById('fin-available-label').innerText = `Available Balance as of ${FINANCIAL_HEALTH.asOfDate}`;
-      document.getElementById('fin-available').innerText = formatINR(totalAvailable);
-      document.getElementById('fin-breakdown-ganesh').innerText = formatINR(ganeshAmount);
-      document.getElementById('fin-breakdown-builder').innerText = formatINR(builderAmount);
-      document.getElementById('fin-breakdown-maintenance').innerText = formatINR(maintenanceAmount);
+    function renderDashboard(data) {
+      if (data.financials) {
+        const fin = data.financials;
+        if (fin.as_of_date) document.getElementById('fin-available-label').innerText = `${fin.as_of_date.label} ${fin.as_of_date.value}`;
+        if (fin.available_balance) document.getElementById('fin-available').innerText = formatINR(fin.available_balance.value);
+        if (fin.ganesh_amount) {
+          document.getElementById('label-fin-ganesh').innerText = fin.ganesh_amount.label;
+          document.getElementById('fin-breakdown-ganesh').innerText = formatINR(fin.ganesh_amount.value);
+        }
+        if (fin.builder_amount) {
+          document.getElementById('label-fin-builder').innerText = fin.builder_amount.label;
+          document.getElementById('fin-breakdown-builder').innerText = formatINR(fin.builder_amount.value);
+        }
+        if (fin.maintenance_amount) {
+          document.getElementById('label-fin-maint').innerText = fin.maintenance_amount.label;
+          document.getElementById('fin-breakdown-maintenance').innerText = formatINR(fin.maintenance_amount.value);
+        }
+      }
 
-      // 2. Render Amenities Status
-      const amBody = document.getElementById('amenities-table-body');
-      amBody.innerHTML = '';
-      AMENITIES.forEach(a => {
-        const isMaint = a.status === "Under Maintenance";
-        const statusBadge = isMaint
-          ? `<span class="bg-amber-100 text-amber-800 border border-amber-300 px-2 py-0.5 rounded font-semibold text-[10px]">${a.status}</span>`
-          : `<span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded font-semibold text-[10px]">${a.status}</span>`;
+      if (data.expenses && data.expenses.items) {
+        const expContainer = document.getElementById('expenses-list-container');
+        expContainer.innerHTML = '';
+        data.expenses.items.forEach(exp => {
+          expContainer.innerHTML += `
+            <div class="p-2.5 flex items-center justify-between hover:bg-slate-50">
+              <span class="font-medium text-slate-700">${exp.item}</span>
+              <span class="font-bold text-slate-900 font-mono">${formatINR(exp.amount)}</span>
+            </div>`;
+        });
+        const total = formatINR(data.expenses.totalOverhead);
+        document.getElementById('exp-total-badge').innerText = `Total: ${total}`;
+        document.getElementById('exp-grand-total').innerText = total;
+      }
 
-        amBody.innerHTML += `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${a.amenity}</td>
-            <td class="p-2.5 border-r border-slate-200">${statusBadge}</td>
-            <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.associationPoc}</td>
-            <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.vendorName}</td>
-            <td class="p-2.5 text-slate-500 italic">${a.vendorPhonenumber}</td>
-          </tr>
-        `;
+      if (data.amenities) {
+        const amBody = document.getElementById('amenities-table-body');
+        amBody.innerHTML = '';
+        data.amenities.forEach(a => {
+          const isMaint = a.status && a.status.toLowerCase().includes("maintenance");
+          amBody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${a.amenity}</td>
+              <td class="p-2.5 border-r border-slate-200">
+                <span class="${isMaint ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'} border px-2 py-0.5 rounded font-semibold text-[10px]">${a.status}</span>
+              </td>
+              <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.associationPoc || '-'}</td>
+              <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.vendorName || '-'}</td>
+              <td class="p-2.5 text-slate-500 italic">${a.vendorPhonenumber || '-'}</td>
+            </tr>`;
+        });
+      }
+
+      if (data.amcDetails) {
+        const amcBody = document.getElementById('amc-table-body');
+        amcBody.innerHTML = '';
+        
+        // Excluded items that do not require AMC tracking
+        const excludedAmenities = ["stp", "water motor"];
+
+        data.amcDetails
+          .filter(item => {
+            const name = (item.amenity || "").trim().toLowerCase();
+            return !excludedAmenities.some(ex => name.includes(ex));
+          })
+          .forEach(item => {
+            amcBody.innerHTML += `
+              <tr class="hover:bg-slate-50">
+                <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${item.amenity}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-500 italic"><span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px]">${item.endDate}</span></td>
+                <td class="p-2.5 text-slate-500 italic"><span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px]">${item.estimate}</span></td>
+              </tr>`;
+          });
+      }
+    }
+
+    function renderMaintenance(data) {
+      if (!data.maintenance) return;
+      const { headers, rows } = data.maintenance;
+      const headerRow = document.getElementById('maintenance-table-header');
+      let headerHtml = '';
+
+      headers.forEach((h, idx) => {
+        if (idx === 0) {
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">${h}</th>`;
+        } else if (idx === 1) {
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[90px] text-right bg-slate-850 text-indigo-100">${h}</th>`;
+        } else if (idx >= 2 && idx <= 5) {
+          headerHtml += `<th class="p-2 border-r border-slate-700 min-w-[125px] bg-slate-850 text-indigo-200">${h}</th>`;
+        } else {
+          headerHtml += `<th class="p-2 border-r border-slate-700 min-w-[105px]">${h}</th>`;
+        }
       });
+      headerRow.innerHTML = headerHtml;
 
-      // 3. Render AMC Details
-      const amcBody = document.getElementById('amc-table-body');
-      amcBody.innerHTML = '';
-      AMC_DETAILS.forEach(item => {
-        amcBody.innerHTML += `
-          <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${item.amenity}</td>
-            <td class="p-2.5 text-slate-500 italic">
-              <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px]">${item.endDate}</span>
-            </td>
-          </tr>
-        `;
-      });
-
-      // 4. Render Important Dates
-      const dtCont = document.getElementById('dates-container');
-      dtCont.innerHTML = '';
-      IMPORTANT_DATES.forEach(d => {
-        dtCont.innerHTML += `
-          <div class="p-2.5 flex items-center justify-between">
-            <span class="font-bold text-slate-900">${d.event}</span>
-            <span class="bg-slate-100 border border-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono text-[11px] font-semibold">${d.date}</span>
-          </div>
-        `;
-      });
-
-      // 5. Render Maintenance Table Header & Body
-      const maintHeader = document.getElementById('maintenance-table-header');
-      let maintHeaderHtml = `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">Flat No</th>`;
-      maintHeaderHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[90px] text-right bg-slate-850 text-indigo-100">Total Due</th>`;
-      
-      // Special Columns immediately next to Total Due
-      SPECIAL_COLUMNS.forEach(col => {
-        maintHeaderHtml += `
-          <th class="p-2 border-r border-slate-700 min-w-[125px] bg-slate-850 text-indigo-200">
-            <div>${col.label}</div>
-            <div class="text-[9px] text-slate-400 font-normal">(${formatINR(col.rate)})</div>
-          </th>`;
-      });
-
-      // Monthly columns follow
-      MONTHS.forEach(m => {
-        maintHeaderHtml += `<th class="p-2 border-r border-slate-700 min-w-[105px]">${m}</th>`;
-      });
-      
-      maintHeader.innerHTML = maintHeaderHtml;
-
-      const flats = getAllFlats();
-      const mBody = document.getElementById('maintenance-table-body');
-      mBody.innerHTML = '';
-
+      const body = document.getElementById('maintenance-table-body');
+      let bodyHtml = '';
       let grandTotalDue = 0;
 
-      flats.forEach(flat => {
-        const isUnsold = UNSOLD_FLATS.includes(flat);
-        let totalDue = 0;
-        let specialTds = '';
-        let monthTds = '';
+      rows.forEach(r => {
+        const totalDueVal = Number(r[1]) || 0;
+        grandTotalDue += totalDueVal;
 
-        if (isUnsold) {
-          SPECIAL_COLUMNS.forEach(() => {
-            specialTds += `<td class="p-2 border-r border-amber-200/70"><span class="text-amber-800 font-semibold text-[11px]">Unsold</span></td>`;
-          });
-          MONTHS.forEach(() => {
-            monthTds += `<td class="p-2 border-r border-amber-200/70"><span class="text-amber-800 font-semibold text-[11px]">Unsold</span></td>`;
-          });
-
-          mBody.innerHTML += `
-            <tr class="bg-amber-50/70 hover:bg-amber-100/60">
-              <td class="p-2 font-bold text-amber-950 border-r border-amber-200 sticky-left bg-amber-100 text-left">
-                ${flat}
-                <span class="block text-[8px] text-amber-900 font-bold uppercase tracking-wider">Unsold</span>
-              </td>
-              <td class="p-2 font-bold border-r border-amber-200 text-right text-slate-400">
-                ₹0
-              </td>
-              ${specialTds}
-              ${monthTds}
-            </tr>
-          `;
-        } else {
-          // Check 3 special columns
-          SPECIAL_COLUMNS.forEach(col => {
-            let specialCell = `<span class="text-emerald-600 font-bold">Paid</span>`;
-            if (UNPAID_SPECIAL[flat] && UNPAID_SPECIAL[flat][col.key]) {
-              const dueAmt = UNPAID_SPECIAL[flat][col.key];
-              totalDue += dueAmt;
-              specialCell = `<span class="text-rose-600 font-bold">${formatINR(dueAmt)}</span>`;
+        bodyHtml += `<tr class="hover:bg-slate-50">`;
+        r.forEach((cellVal, idx) => {
+          if (idx === 0) {
+            bodyHtml += `<td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">${cellVal}</td>`;
+          } else if (idx === 1) {
+            const isDue = Number(cellVal) > 0;
+            bodyHtml += `<td class="p-2.5 font-bold border-r border-slate-200 text-right ${isDue ? 'text-rose-600' : 'text-emerald-600'}">${formatINR(cellVal)}</td>`;
+          } else {
+            let display = cellVal;
+            if (cellVal === "0" || cellVal === 0 || cellVal === "") {
+              display = idx === 6 ? `<span class="text-emerald-600 font-bold">Paid</span>` : `<span class="text-slate-300">-</span>`;
+            } else if (!isNaN(Number(cellVal)) && Number(cellVal) > 0) {
+              display = `<span class="text-rose-600 font-bold">${formatINR(cellVal)}</span>`;
             }
-            specialTds += `<td class="p-2 border-r border-slate-200 bg-slate-50/40">${specialCell}</td>`;
-          });
-
-          // Check months
-          MONTHS.forEach(m => {
-            let cell = '<span class="text-slate-300">-</span>';
-            if (m === "September 20266" || m === "October 20266") {
-              if (UNPAID_FLATS[flat] && UNPAID_FLATS[flat][m]) {
-                totalDue += UNPAID_FLATS[flat][m];
-                cell = `<span class="text-rose-600 font-bold">${formatINR(UNPAID_FLATS[flat][m])}</span>`;
-              } else {
-                cell = `<span class="text-emerald-600 font-bold">Paid</span>`;
-              }
-            }
-            monthTds += `<td class="p-2 border-r border-slate-200">${cell}</td>`;
-          });
-
-          grandTotalDue += totalDue;
-
-          mBody.innerHTML += `
-            <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">
-                ${flat}
-              </td>
-              <td class="p-2.5 font-bold border-r border-slate-200 text-right ${totalDue > 0 ? 'text-rose-600' : 'text-emerald-600'}">
-                ${formatINR(totalDue)}
-              </td>
-              ${specialTds}
-              ${monthTds}
-            </tr>
-          `;
-        }
+            bodyHtml += `<td class="p-2 border-r border-slate-200">${display}</td>`;
+          }
+        });
+        bodyHtml += `</tr>`;
       });
 
+      body.innerHTML = bodyHtml;
       document.getElementById('maint-grand-total-due').innerText = formatINR(grandTotalDue);
 
-      // 6. Render Meetings Attendance Table Header & Body
-      const meetHeader = document.getElementById('meetings-table-header');
-      const meetBody = document.getElementById('meetings-table-body');
+      if (data.builder) {
+        const bHeaders = data.builder.headers || [];
+        const bVals = data.builder.values || [];
+        const bHeaderRow = document.getElementById('builder-table-header');
+        const bBodyRow = document.getElementById('builder-table-body');
 
-      let meetHeaderHtml = `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">Flat No</th>`;
-      meetHeaderHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[75px] text-right bg-slate-850 text-indigo-100">Attended</th>`;
+        let bHeaderHtml = '';
+        bHeaders.forEach((h, idx) => {
+          bHeaderHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[110px] ${idx === 0 ? 'text-right text-indigo-100' : ''}">${h}</th>`;
+        });
+        bHeaderRow.innerHTML = bHeaderHtml;
 
-      meetings.forEach(m => {
-        meetHeaderHtml += `
-          <th class="p-2 border-r border-slate-700 min-w-[150px] text-center">
-            <div class="font-bold">${m.name}</div>
-            <div class="text-[9px] text-slate-300 font-normal mt-0.5">Scheduled: ${m.scheduledDate}</div>
-          </th>`;
-      });
-      meetHeader.innerHTML = meetHeaderHtml;
+        let bBodyHtml = `<tr class="bg-amber-50/50 hover:bg-amber-100/50 font-semibold">`;
+        bVals.forEach((val, idx) => {
+          const num = Number(val);
+          if (idx === 0) {
+            bBodyHtml += `<td class="p-2.5 border-r border-amber-200 text-right font-black text-amber-950">${formatINR(val)}</td>`;
+            document.getElementById('builder-grand-total-due').innerText = formatINR(val);
+          } else if (!isNaN(num) && num > 0) {
+            bBodyHtml += `<td class="p-2.5 border-r border-amber-200 text-amber-900 font-bold">${formatINR(val)}</td>`;
+          } else {
+            bBodyHtml += `<td class="p-2.5 border-r border-slate-200 text-slate-400">${val === "0" || val === 0 ? 'Paid' : val}</td>`;
+          }
+        });
+        bBodyHtml += `</tr>`;
+        bBodyRow.innerHTML = bBodyHtml;
+      }
+    }
 
-      meetBody.innerHTML = '';
-      flats.forEach(flat => {
-        const isUnsold = UNSOLD_FLATS.includes(flat);
-        let meetingTds = '';
+    function renderMeetings(data) {
+      if (!data.meetings) return;
+      const { headers, rows, notes } = data.meetings;
 
-        if (isUnsold) {
-          meetings.forEach(() => {
-            meetingTds += `<td class="p-2 border-r border-amber-200/70 text-amber-800 font-semibold text-[11px]">Unsold</td>`;
-          });
-
-          meetBody.innerHTML += `
-            <tr class="bg-amber-50/70 hover:bg-amber-100/60">
-              <td class="p-2 font-bold text-amber-950 border-r border-amber-200 sticky-left bg-amber-100 text-left">
-                ${flat}
-                <span class="block text-[8px] text-amber-900 font-bold uppercase tracking-wider">Unsold</span>
-              </td>
-              <td class="p-2 font-bold border-r border-amber-200 text-right text-slate-400">
-                -
-              </td>
-              ${meetingTds}
-            </tr>
-          `;
+      const headerRow = document.getElementById('meetings-table-header');
+      let headerHtml = '';
+      headers.forEach((h, idx) => {
+        if (idx === 0) {
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">${h}</th>`;
+        } else if (idx === 1) {
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[75px] text-right bg-slate-850 text-indigo-100">${h}</th>`;
         } else {
-          // Status kept empty (-) until the meeting occurs
-          meetings.forEach(() => {
-            meetingTds += `<td class="p-2 border-r border-slate-200 text-slate-400 font-medium">-</td>`;
-          });
-
-          meetBody.innerHTML += `
-            <tr class="hover:bg-slate-50">
-              <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">
-                ${flat}
-              </td>
-              <td class="p-2.5 font-bold border-r border-slate-200 text-right text-slate-700 font-mono">
-                0/0
-              </td>
-              ${meetingTds}
-            </tr>
-          `;
+          headerHtml += `<th class="p-2 border-r border-slate-700 min-w-[150px] text-center font-bold">${h}</th>`;
         }
       });
+      headerRow.innerHTML = headerHtml;
 
-      // 7. Render Meeting Notes
+      const body = document.getElementById('meetings-table-body');
+      let bodyHtml = '';
+      rows.forEach(r => {
+        bodyHtml += `<tr class="hover:bg-slate-50">`;
+        r.forEach((cellVal, idx) => {
+          if (idx === 0) {
+            bodyHtml += `<td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">${cellVal}</td>`;
+          } else if (idx === 1) {
+            bodyHtml += `<td class="p-2.5 font-bold border-r border-slate-200 text-right text-slate-700 font-mono">${cellVal}/${headers.length - 2}</td>`;
+          } else {
+            bodyHtml += `<td class="p-2 border-r border-slate-200 text-slate-400 font-medium">${cellVal}</td>`;
+          }
+        });
+        bodyHtml += `</tr>`;
+      });
+      body.innerHTML = bodyHtml;
+
       const notesBody = document.getElementById('meeting-notes-body');
       notesBody.innerHTML = '';
-      MEETING_NOTES.forEach(n => {
+      (notes || []).forEach(n => {
         notesBody.innerHTML += `
           <tr class="hover:bg-slate-50">
-            <td class="p-2.5 border-r border-slate-200 align-top">
-              <span class="bg-slate-100 border border-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold whitespace-nowrap">${n.date}</span>
-            </td>
+            <td class="p-2.5 border-r border-slate-200 align-top"><span class="bg-slate-100 border border-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold whitespace-nowrap">${n.date}</span></td>
             <td class="p-2.5 text-slate-800 leading-relaxed text-[11px]">${n.notes}</td>
-          </tr>
-        `;
+          </tr>`;
       });
+    }
+
+    function renderDirectory(data) {
+      if (!data.directory) return;
+      const dirBody = document.getElementById('directory-table-body');
+      dirBody.innerHTML = '';
+
+      data.directory.forEach(item => {
+        const isTenant = item.occupiedBy && item.occupiedBy.toLowerCase() === "tenant";
+        const occBadge = isTenant 
+          ? `<span class="bg-amber-100 border border-amber-300 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-semibold">Tenant</span>`
+          : `<span class="bg-blue-100 border border-blue-300 text-blue-800 px-1.5 py-0.5 rounded text-[10px] font-semibold">Owner</span>`;
+
+        dirBody.innerHTML += `
+          <tr class="hover:bg-slate-50">
+            <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white">${item.flat}</td>
+            <td class="p-2.5 border-r border-slate-200 font-medium">${item.ownerName}</td>
+            <td class="p-2.5 border-r border-slate-200 text-slate-600 font-mono text-[11px]">${item.ownerPhone}</td>
+            <td class="p-2.5 border-r border-slate-200 text-center">${occBadge}</td>
+            <td class="p-2.5 border-r border-slate-200 ${item.tenantName === '-' ? 'text-slate-400 text-center' : 'font-medium'}">${item.tenantName}</td>
+            <td class="p-2.5 border-r border-slate-200 text-slate-600 font-mono text-[11px] ${item.tenantPhone === '-' ? 'text-slate-400 text-center' : ''}">${item.tenantPhone}</td>
+            <td class="p-2.5 text-slate-600 italic text-[11px]">${item.vehicleNumbers}</td>
+          </tr>`;
+      });
+    }
+
+    function renderQuickHelp(data) {
+      if (!data.quickHelp) return;
+      const container = document.getElementById('quick-help-list');
+      container.innerHTML = '';
+
+      data.quickHelp.forEach(c => {
+        const cleanNumber = (c.phone || '').replace(/[^0-9+]/g, '');
+        container.innerHTML += `
+          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50 flex items-center justify-between shadow-xs">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">${c.icon || '📞'}</span>
+              <div>
+                <span class="text-xs font-bold text-slate-900 block">${c.role}</span>
+                <span class="text-[11px] text-slate-600 block">${c.name}</span>
+                <span class="text-[11px] font-mono text-slate-700 font-semibold block mt-0.5">${c.phone}</span>
+              </div>
+            </div>
+            <a href="tel:${cleanNumber}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs flex items-center gap-1 shadow-xs transition-colors">
+              <span>📞</span> Call
+            </a>
+          </div>`;
+      });
+    }
+
+    async function handleFeedbackSubmit(e) {
+      e.preventDefault();
+      const btn = document.getElementById('fb-btn');
+      const status = document.getElementById('fb-status');
+
+      const payload = {
+        type: document.getElementById('fb-type').value,
+        flat: document.getElementById('fb-flat').value.trim() || "-",
+        message: document.getElementById('fb-message').value.trim()
+      };
+
+      btn.disabled = true;
+      btn.innerText = "Submitting to sheet...";
+
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        document.getElementById('feedback-form').reset();
+        handleCategoryChange();
+        status.innerText = "✅ Recorded successfully! Your submission has been saved directly to committee records.";
+        status.className = "text-center text-xs p-2.5 rounded font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300";
+        status.classList.remove('hidden');
+      } catch (err) {
+        status.innerText = "❌ Could not reach Google Sheets. Please check your connection.";
+        status.className = "text-center text-xs p-2.5 rounded font-semibold bg-rose-100 text-rose-800 border border-rose-300";
+        status.classList.remove('hidden');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Submit";
+      }
+    }
+
+    // iframe Bridge Loader: Completely immune to CORS & redirect restrictions
+    function fetchSheetData(url) {
+      return new Promise((resolve, reject) => {
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+
+        const timer = setTimeout(() => {
+          cleanup();
+          reject(new Error("Loading timed out from Google Sheets. Check script permissions."));
+        }, 25000);
+
+        function cleanup() {
+          clearTimeout(timer);
+          window.removeEventListener('message', handleMessage);
+          if (iframe.parentNode) {
+            iframe.parentNode.removeChild(iframe);
+          }
+        }
+
+        function handleMessage(event) {
+          let payload = event.data;
+
+          if (typeof payload === 'string') {
+            try {
+              payload = JSON.parse(payload);
+            } catch (e) {
+              return;
+            }
+          }
+
+          if (payload && (payload.financials || payload.maintenance || payload.directory || payload.status === "success")) {
+            console.log("Sheet data received successfully:", payload);
+            cleanup();
+            resolve(payload);
+          }
+        }
+
+        window.addEventListener('message', handleMessage, false);
+
+        const separator = url.indexOf('?') >= 0 ? '&' : '?';
+        iframe.src = `${url}${separator}bridge=1`;
+
+        document.body.appendChild(iframe);
+      });
+    }
+
+    // App Initialization
+    async function init() {
+      const loader = document.getElementById('loading-overlay');
+      try {
+        const data = await fetchSheetData(APPS_SCRIPT_URL);
+
+        renderDashboard(data);
+        renderMaintenance(data);
+        renderMeetings(data);
+        renderDirectory(data);
+        renderQuickHelp(data);
+      } catch (err) {
+        console.error("Failed to load Google Sheet data:", err);
+      } finally {
+        if (loader) loader.classList.add('hidden');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', init);
