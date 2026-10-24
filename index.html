@@ -18,13 +18,63 @@
       touch-action: pan-x pan-y;
     }
 
-    .sticky-left {
+    /* Fixed Dual Sticky Columns with Anti-Overlap Z-Indexes */
+    .sticky-col-0 {
       position: sticky;
       left: 0;
       z-index: 20;
+      width: 65px;
+      min-width: 65px;
+      max-width: 65px;
+      background-color: #ffffff;
     }
-    th.sticky-left {
+    .sticky-col-1 {
+      position: sticky;
+      left: 65px;
+      z-index: 20;
+      width: 90px;
+      min-width: 90px;
+      max-width: 90px;
+      background-color: #ffffff;
+      box-shadow: 2px 0 5px -2px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Pinned corner headers sit ABOVE regular headers (z-50 vs z-30) */
+    thead {
+      position: sticky;
+      top: 0;
       z-index: 30;
+    }
+    th {
+      background-color: #1e293b;
+    }
+    th.sticky-col-0 {
+      position: sticky;
+      left: 0;
+      top: 0;
+      z-index: 50 !important;
+      background-color: #0f172a !important;
+    }
+    th.sticky-col-1 {
+      position: sticky;
+      left: 65px;
+      top: 0;
+      z-index: 50 !important;
+      background-color: #1e293b !important;
+    }
+
+    /* Universal Admin Edit Styling */
+    .edit-highlight {
+      position: relative;
+      cursor: pointer;
+      outline: 1.5px dashed #4f46e5;
+      outline-offset: -2px;
+      background-color: #faf5ff !important;
+      transition: background-color 0.15s ease, outline-color 0.15s ease;
+    }
+    .edit-highlight:hover {
+      background-color: #e0e7ff !important;
+      outline-color: #3730a3;
     }
   </style>
 </head>
@@ -36,29 +86,38 @@
       <div class="flex items-center gap-2">
         <h1 class="text-base font-bold tracking-tight">Harsha Classic</h1>
         <span class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">Resident Portal</span>
+        <!-- Minimal Live Sync Circle Dot (Green = Live, Red = Offline, Amber = Syncing) -->
+        <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse ml-1 inline-block" title="Sync Status"></span>
       </div>
 
-      <button onclick="toggleMenu()" class="p-1.5 rounded-lg bg-slate-800 text-slate-200 hover:text-white focus:outline-none border border-slate-700" aria-label="Toggle Menu">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-        </svg>
-      </button>
+      <div class="flex items-center gap-1.5">
+        <button id="btn-admin-toggle" onclick="promptPasskey()" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-1 transition-colors">
+          <span id="admin-btn-icon">✏️</span>
+          <span id="admin-btn-text">Edit</span>
+        </button>
+
+        <button onclick="toggleMenu()" class="p-1.5 rounded-lg bg-slate-800 text-slate-200 hover:text-white focus:outline-none border border-slate-700" aria-label="Toggle Menu">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Admin Status Banner -->
+    <div id="admin-banner" class="hidden bg-amber-500 text-amber-950 px-4 py-1.5 text-xs font-bold flex items-center justify-between shadow-inner">
+      <div class="flex items-center gap-1.5">
+        <span>🔓</span>
+        <span>Admin Mode Active — Click entries to edit or use + buttons</span>
+      </div>
+      <button onclick="exitAdminMode()" class="bg-amber-950 hover:bg-black text-white text-[10px] px-2.5 py-0.5 rounded font-bold transition-colors">Exit</button>
     </div>
 
     <!-- Main Navigation Tabs -->
     <div class="px-3 flex gap-2 border-t border-slate-800 bg-slate-950 py-2">
-      <button id="btn-tab-dashboard" onclick="showTab('dashboard')" 
-        class="flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white">
-        Dashboard
-      </button>
-      <button id="btn-tab-maintenance" onclick="showTab('maintenance')" 
-        class="flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white">
-        Maintenance
-      </button>
-      <button id="btn-tab-meetings" onclick="showTab('meetings')" 
-        class="flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white">
-        Meetings
-      </button>
+      <button id="btn-tab-dashboard" onclick="showTab('dashboard')" class="flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white">Dashboard</button>
+      <button id="btn-tab-maintenance" onclick="showTab('maintenance')" class="flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white">Maintenance</button>
+      <button id="btn-tab-meetings" onclick="showTab('meetings')" class="flex-1 py-2 text-xs font-bold rounded bg-slate-800 text-gray-400 hover:text-white">Meetings</button>
     </div>
   </header>
 
@@ -68,80 +127,116 @@
     <div class="p-4 border-b border-slate-800 flex items-center justify-between">
       <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Quick Menu</span>
       <button onclick="toggleMenu()" class="text-slate-400 hover:text-white p-1">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
       </button>
     </div>
     
     <nav class="p-3 space-y-1 flex-1 text-xs font-medium">
-      <button onclick="showTab('dashboard'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2">
-        <span>📊</span> Dashboard
-      </button>
-      <button onclick="showTab('maintenance'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2">
-        <span>💰</span> Maintenance
-      </button>
-      <button onclick="showTab('meetings'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2">
-        <span>📅</span> Meetings
-      </button>
-      
+      <button onclick="showTab('dashboard'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2"><span>📊</span> Dashboard</button>
+      <button onclick="showTab('maintenance'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2"><span>💰</span> Maintenance</button>
+      <button onclick="showTab('meetings'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-slate-200 flex items-center gap-2"><span>📅</span> Meetings</button>
       <div class="border-t border-slate-800 my-2 pt-2"></div>
-
-      <button onclick="showTab('directory'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
-        <span>📖</span> Owner Directory
-      </button>
-      <button onclick="showTab('quick-help'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
-        <span>🆘</span> Quick Help
-      </button>
-      <button onclick="showTab('feedback'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2">
-        <span>💬</span> Complaints & Feedback
-      </button>
+      <button onclick="showTab('directory'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2"><span>📖</span> Owner Directory</button>
+      <button onclick="showTab('quick-help'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2"><span>🆘</span> Quick Help</button>
+      <button onclick="showTab('feedback'); toggleMenu();" class="w-full text-left px-3 py-2.5 rounded hover:bg-slate-800 text-indigo-300 font-semibold flex items-center gap-2"><span>💬</span> Complaints & Feedback</button>
     </nav>
-    
-    <div class="p-3 border-t border-slate-800 text-[10px] text-slate-500 text-center">
-      Harsha Classic Association v2.0
-    </div>
+    <div class="p-3 border-t border-slate-800 text-[10px] text-slate-500 text-center">Harsha Classic Association v5.0</div>
   </aside>
 
   <!-- LOADING OVERLAY -->
   <div id="loading-overlay" class="fixed inset-0 bg-slate-900/40 z-40 flex items-center justify-center backdrop-blur-xs">
     <div class="bg-white rounded-xl shadow-lg p-4 flex items-center gap-3 border border-slate-200">
       <div class="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-      <span class="text-xs font-semibold text-slate-800">Loading live data from Google Sheet...</span>
+      <span class="text-xs font-semibold text-slate-800">Connecting live to Google Sheets...</span>
     </div>
   </div>
 
-  <!-- ========================================== -->
-  <!-- TAB 1: DASHBOARD                           -->
-  <!-- ========================================== -->
-  <main id="tab-dashboard" class="p-3 space-y-4 max-w-md mx-auto w-full">
+  <!-- PASSKEY PROMPT MODAL -->
+  <div id="modal-passkey" class="fixed inset-0 bg-slate-950/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-xs rounded-xl shadow-2xl p-4 space-y-3 border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="text-xs font-extrabold uppercase text-slate-800 flex items-center gap-1.5"><span>🔒</span> Admin Passkey</h3>
+        <button onclick="closePasskeyModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+      </div>
+      <p class="text-[11px] text-slate-600 leading-tight">Enter authorization passkey to enable admin edit mode:</p>
+      <input type="password" id="input-passkey" placeholder="Enter passkey" class="w-full p-2 border border-slate-300 rounded text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-mono">
+      <div id="passkey-error" class="hidden text-[11px] text-rose-600 font-bold text-center">Invalid passkey. Try again.</div>
+      <div class="flex gap-2">
+        <button onclick="closePasskeyModal()" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded">Cancel</button>
+        <button onclick="verifyPasskey()" class="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded">Unlock</button>
+      </div>
+    </div>
+  </div>
 
+  <!-- UNIVERSAL ENTRY EDIT MODAL -->
+  <div id="modal-edit-cell" class="fixed inset-0 bg-slate-950/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-xs rounded-xl shadow-2xl p-4 space-y-3 border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="text-xs font-extrabold uppercase text-slate-800 flex items-center gap-1"><span>✏️</span> Edit Entry</h3>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+      </div>
+      <div class="text-[11px] text-slate-600 space-y-0.5">
+        <div>Section: <span id="modal-edit-sheet" class="font-bold text-slate-900"></span></div>
+        <div>Item: <span id="modal-edit-key" class="font-bold text-slate-900"></span></div>
+        <div>Field: <span id="modal-edit-field" class="font-bold text-indigo-700"></span></div>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">New Value</label>
+        <input type="text" id="modal-edit-value" class="w-full p-2 border border-slate-300 rounded text-xs outline-none focus:ring-2 focus:ring-indigo-500 font-semibold">
+        <span class="text-[10px] text-slate-400 block mt-1">💡 Enter 0 or Paid to mark as Paid. Numbers format automatically.</span>
+      </div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeEditModal()" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded">Cancel</button>
+        <button id="btn-save-edit" onclick="saveCellEdit()" class="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded">Save Edit</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UNIVERSAL ADD MODAL (Handles Add Month, Meeting, Note, Contact) -->
+  <div id="modal-add-entry" class="fixed inset-0 bg-slate-950/70 z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-xs rounded-xl shadow-2xl p-4 space-y-3 border border-slate-200">
+      <div class="flex items-center justify-between border-b pb-2">
+        <h3 class="text-xs font-extrabold uppercase text-slate-800 flex items-center gap-1.5">
+          <span id="add-modal-icon">➕</span> <span id="add-modal-title">Add Entry</span>
+        </h3>
+        <button onclick="closeAddEntryModal()" class="text-slate-400 hover:text-slate-600 text-sm font-bold">&times;</button>
+      </div>
+      <div id="add-modal-fields" class="space-y-2.5 text-xs"></div>
+      <div class="flex gap-2 pt-1">
+        <button onclick="closeAddEntryModal()" class="flex-1 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded">Cancel</button>
+        <button id="btn-save-add-entry" onclick="executeAddEntry()" class="flex-1 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded">Add Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1: DASHBOARD -->
+  <main id="tab-dashboard" class="p-3 space-y-4 max-w-md mx-auto w-full">
     <!-- Financial Health -->
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2">
+      <div class="bg-slate-100 border-b border-slate-200 px-3 py-2 flex items-center justify-between">
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Financial Health</h2>
+        <span class="text-[10px] text-slate-500 font-mono cursor-pointer" id="fin-asof-date" onclick="openEditModal('Dashboard_Finances', 'as_of_date', 'Display_Value', masterData.financials.as_of_date ? masterData.financials.as_of_date.value : '', 'As of Date', 3)">as of 10th October 2026</span>
       </div>
       <div class="p-3 space-y-2.5">
         <div class="bg-blue-50 border border-blue-200 p-3 rounded space-y-2.5">
           <div>
-            <span class="text-[11px] text-blue-900 font-bold uppercase block" id="fin-available-label">Available Balance</span>
-            <span class="text-2xl font-black text-blue-950 mt-0.5 block" id="fin-available">...</span>
+            <span class="text-[11px] text-blue-900 font-bold uppercase block">Total Available Balance</span>
+            <span class="text-2xl font-black text-blue-950 mt-0.5 block font-mono" id="fin-available">₹97,272</span>
           </div>
-
           <div class="border-t border-blue-200/80 pt-2.5">
             <span class="text-[10px] uppercase font-bold text-blue-800 tracking-wider block mb-1.5">Balance Breakdown</span>
             <div class="grid grid-cols-3 gap-1.5 text-center">
-              <div class="bg-white border border-blue-100 p-2 rounded">
-                <span class="text-[10px] text-slate-600 font-semibold block leading-tight" id="label-fin-ganesh">Lord Ganesh Amount</span>
-                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-ganesh">...</span>
+              <div class="bg-white border border-blue-100 p-2 rounded cursor-pointer transition-shadow" id="box-fin-ganesh" onclick="openEditModal('Dashboard_Finances', 'ganesh_amount', 'Display_Value', masterData.financials.ganesh_amount ? masterData.financials.ganesh_amount.value : 0, 'Lord Ganesh Amount', 3)">
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Lord Ganesh Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block font-mono" id="fin-breakdown-ganesh">₹42,481</span>
               </div>
-              <div class="bg-white border border-blue-100 p-2 rounded">
-                <span class="text-[10px] text-slate-600 font-semibold block leading-tight" id="label-fin-builder">Builder Amount</span>
-                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-builder">...</span>
+              <div class="bg-white border border-blue-100 p-2 rounded cursor-pointer transition-shadow" id="box-fin-builder" onclick="openEditModal('Dashboard_Finances', 'builder_amount', 'Display_Value', masterData.financials.builder_amount ? masterData.financials.builder_amount.value : 0, 'Builder Amount', 3)">
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Builder Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block font-mono" id="fin-breakdown-builder">₹0</span>
               </div>
-              <div class="bg-white border border-blue-100 p-2 rounded">
-                <span class="text-[10px] text-slate-600 font-semibold block leading-tight" id="label-fin-maint">Maintenance Amount</span>
-                <span class="text-xs font-bold text-slate-900 mt-1 block" id="fin-breakdown-maintenance">...</span>
+              <div class="bg-white border border-blue-100 p-2 rounded cursor-pointer transition-shadow" id="box-fin-maint" onclick="openEditModal('Dashboard_Finances', 'maintenance_amount', 'Display_Value', masterData.financials.maintenance_amount ? masterData.financials.maintenance_amount.value : 0, 'Maintenance Amount', 3)">
+                <span class="text-[10px] text-slate-600 font-semibold block leading-tight">Maintenance Amount</span>
+                <span class="text-xs font-bold text-slate-900 mt-1 block font-mono" id="fin-breakdown-maintenance">₹54,791</span>
               </div>
             </div>
           </div>
@@ -149,16 +244,16 @@
       </div>
     </section>
 
-    <!-- Staff Salaries & Recurring Expenses -->
+    <!-- Expenses -->
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-slate-100 border-b border-slate-200 px-3 py-2 flex items-center justify-between">
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Staff Salaries & Recurring Expenses</h2>
-        <span class="text-[11px] font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded" id="exp-total-badge">Total: ...</span>
+        <span class="text-[11px] font-bold text-slate-700 bg-slate-200 px-2 py-0.5 rounded font-mono" id="exp-total-badge">Total: ₹1,07,000</span>
       </div>
       <div class="divide-y divide-slate-100 text-xs" id="expenses-list-container"></div>
       <div class="bg-slate-50 border-t border-slate-200 p-2.5 flex items-center justify-between text-xs font-bold text-slate-900">
         <span>Total Monthly Overhead</span>
-        <span class="text-indigo-700 text-sm font-extrabold" id="exp-grand-total">...</span>
+        <span class="text-indigo-700 text-sm font-extrabold font-mono" id="exp-grand-total">₹1,07,000</span>
       </div>
     </section>
 
@@ -183,7 +278,7 @@
       </div>
     </section>
 
-    <!-- AMC Details -->
+    <!-- AMC Details (Excludes STP and Water Motor) -->
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-slate-100 border-b border-slate-200 px-3 py-2">
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">AMC Details</h2>
@@ -201,19 +296,20 @@
         </table>
       </div>
     </section>
-
   </main>
 
-  <!-- ========================================== -->
-  <!-- TAB 2: MAINTENANCE                         -->
-  <!-- ========================================== -->
+  <!-- TAB 2: MAINTENANCE -->
   <main id="tab-maintenance" class="p-3 hidden max-w-md mx-auto space-y-4 w-full">
-
     <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between">
-        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Maintenance Dues</h2>
-        <span class="text-xs font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded">
-          Total Due: <span id="maint-grand-total-due">...</span>
+        <div class="flex items-center gap-2">
+          <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Maintenance Dues</h2>
+          <button onclick="openAddEntryModal('month_maint')" class="admin-only hidden text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-0.5 rounded shadow-xs">
+            + Add Month
+          </button>
+        </div>
+        <span class="text-xs font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2 py-0.5 rounded font-mono">
+          Total Due: <span id="maint-grand-total-due">₹7,500</span>
         </span>
       </div>
 
@@ -225,9 +321,8 @@
           <tbody id="maintenance-table-body" class="divide-y divide-slate-200"></tbody>
         </table>
       </div>
-
       <div class="bg-slate-50 p-2 text-center text-[10px] text-slate-500 border-t border-slate-200">
-        👉 Swipe horizontally to view special funds & monthly dues
+        👉 Flat No & Total Due stay frozen on left without header overlap
       </div>
     </div>
 
@@ -237,9 +332,12 @@
         <div class="flex items-center gap-1.5">
           <span class="text-amber-700">🏗️</span>
           <h2 class="text-xs font-extrabold uppercase tracking-wide text-amber-950">Builder Pending Amount</h2>
+          <button onclick="openAddEntryModal('month_builder')" class="admin-only hidden text-[10px] bg-amber-700 hover:bg-amber-800 text-white font-bold px-2 py-0.5 rounded shadow-xs ml-1">
+            + Add Month
+          </button>
         </div>
-        <span class="text-xs font-extrabold text-amber-900 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded">
-          Total Due: <span id="builder-grand-total-due">...</span>
+        <span class="text-xs font-extrabold text-amber-900 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded font-mono">
+          Total Due: <span id="builder-grand-total-due">₹10,00,000</span>
         </span>
       </div>
 
@@ -251,22 +349,20 @@
           <tbody id="builder-table-body"></tbody>
         </table>
       </div>
-
-      <div class="bg-amber-50/60 p-2 text-center text-[10px] text-amber-800 border-t border-amber-200">
-        ℹ️ Total pending amounts owed directly by the builder to the society
-      </div>
     </div>
-
   </main>
 
-  <!-- ========================================== -->
-  <!-- TAB 3: MEETINGS                            -->
-  <!-- ========================================== -->
+  <!-- TAB 3: MEETINGS -->
   <main id="tab-meetings" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
-
     <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-      <div class="bg-slate-100 border-b border-slate-200 p-2.5">
-        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Meetings Attendance</h2>
+      <div class="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Meetings Attendance</h2>
+          <button onclick="openAddEntryModal('meeting')" class="admin-only hidden text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-0.5 rounded shadow-xs">
+            + Add Meeting
+          </button>
+        </div>
+        <span class="text-[10px] text-slate-500 font-medium">All 64 Flats</span>
       </div>
 
       <div class="w-full overflow-x-auto max-h-[55vh] mobile-scroll">
@@ -279,9 +375,13 @@
       </div>
     </div>
 
+    <!-- Meeting Notes Section -->
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-      <div class="bg-slate-100 border-b border-slate-200 p-2.5">
+      <div class="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between">
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Meeting Notes</h2>
+        <button onclick="openAddEntryModal('meeting_note')" class="admin-only hidden text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-2 py-0.5 rounded shadow-xs">
+          + Add Note
+        </button>
       </div>
       <div class="w-full overflow-x-auto mobile-scroll">
         <table class="w-full text-left text-xs border-collapse">
@@ -295,24 +395,20 @@
         </table>
       </div>
     </section>
-
   </main>
 
-  <!-- ========================================== -->
-  <!-- TAB 4: OWNER DIRECTORY                     -->
-  <!-- ========================================== -->
+  <!-- TAB 4: OWNER DIRECTORY -->
   <main id="tab-directory" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
     <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
       <div class="bg-slate-100 border-b border-slate-200 p-2.5 flex items-center justify-between">
         <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800">Owner Directory</h2>
-        <span class="text-[10px] text-slate-500 font-medium">Harsha Classic Residents</span>
+        <span class="text-[10px] text-slate-500 font-medium">All 64 Residents</span>
       </div>
-
       <div class="w-full overflow-x-auto max-h-[65vh] mobile-scroll">
         <table class="w-full text-left text-xs border-collapse whitespace-nowrap">
           <thead class="bg-slate-800 text-white font-bold sticky top-0 z-40">
             <tr>
-              <th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900">Flat No</th>
+              <th class="p-2.5 border-r border-slate-700 sticky-col-0 bg-slate-900">Flat No</th>
               <th class="p-2.5 border-r border-slate-700">Owner Name</th>
               <th class="p-2.5 border-r border-slate-700">Phone Number</th>
               <th class="p-2.5 border-r border-slate-700">Occupied By</th>
@@ -324,32 +420,28 @@
           <tbody id="directory-table-body" class="divide-y divide-slate-200"></tbody>
         </table>
       </div>
-
-      <div class="bg-slate-50 p-2 text-center text-[10px] text-slate-500 border-t border-slate-200">
-        👉 Swipe horizontally to view full tenant and vehicle details
-      </div>
     </div>
   </main>
 
-  <!-- ========================================== -->
-  <!-- TAB 5: QUICK HELP                          -->
-  <!-- ========================================== -->
+  <!-- TAB 5: QUICK HELP -->
   <main id="tab-quick-help" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
     <div class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden p-3.5 space-y-3">
-      <div class="border-b border-slate-200 pb-2">
-        <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800 flex items-center gap-1.5">
-          <span>🆘</span> Quick Help
-        </h2>
-        <p class="text-[11px] text-slate-500 mt-0.5">Essential on-demand technician contacts for Harsha Classic.</p>
+      <div class="border-b border-slate-200 pb-2 flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-extrabold uppercase tracking-wide text-slate-800 flex items-center gap-1.5">
+            <span>🆘</span> Quick Help
+          </h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">Essential on-demand technician contacts for Harsha Classic.</p>
+        </div>
+        <button onclick="openAddEntryModal('contact')" class="admin-only hidden text-[10px] bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-2 py-0.5 rounded shadow-xs">
+          + Add Contact
+        </button>
       </div>
-
       <div class="space-y-2.5" id="quick-help-list"></div>
     </div>
   </main>
 
-  <!-- ========================================== -->
-  <!-- TAB 6: COMPLAINTS AND FEEDBACK             -->
-  <!-- ========================================== -->
+  <!-- TAB 6: COMPLAINTS AND FEEDBACK -->
   <main id="tab-feedback" class="p-3 hidden max-w-md mx-auto space-y-3 w-full">
     <section class="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden p-3.5 space-y-3">
       <div class="border-b border-slate-200 pb-2">
@@ -367,9 +459,7 @@
         </div>
 
         <div>
-          <label class="block font-bold text-slate-700 mb-1" id="fb-flat-label">
-            Flat Number <span class="text-rose-500" id="fb-flat-req">*</span>
-          </label>
+          <label class="block font-bold text-slate-700 mb-1" id="fb-flat-label">Flat Number <span class="text-rose-500" id="fb-flat-req">*</span></label>
           <input type="text" id="fb-flat" required placeholder="e.g. G3 or 204" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
 
@@ -378,20 +468,92 @@
           <textarea id="fb-message" rows="3" required placeholder="Describe your concern or feedback here..." class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-indigo-500 outline-none resize-none"></textarea>
         </div>
 
-        <button type="submit" id="fb-btn" class="w-full py-2.5 bg-indigo-600 text-white font-bold rounded shadow hover:bg-indigo-700 transition-colors">
-          Submit
-        </button>
+        <button type="submit" id="fb-btn" class="w-full py-2.5 bg-indigo-600 text-white font-bold rounded shadow hover:bg-indigo-700 transition-colors">Submit to Association</button>
       </form>
 
       <div id="fb-status" class="hidden text-center text-xs p-2.5 rounded font-semibold"></div>
     </section>
   </main>
 
-  <!-- ========================================== -->
-  <!-- GOOGLE SHEETS LIVE DATA INTEGRATION        -->
-  <!-- ========================================== -->
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz0agDssuk6_uYtlbToS5a5GfxUVJUr_TUORXnYnhGgvX5AviCnpUrIDEznuZbYTK7PaQ/exec";
+    const PASSKEY_SECRET = "elnino";
+
+    let isAdmin = false;
+    let currentEditPayload = null;
+    let currentAddType = null;
+
+    let masterData = {
+      financials: {
+        as_of_date: { label: "Available Balance as of", value: "10th October 2026" },
+        ganesh_amount: { label: "Lord Ganesh Amount", value: 42481 },
+        builder_amount: { label: "Builder Amount", value: 0 },
+        maintenance_amount: { label: "Maintenance Amount", value: 54791 },
+        available_balance: { label: "Total Available Balance", value: 97272 }
+      },
+      expenses: {
+        totalOverhead: 107000,
+        items: [
+          { item: "Security", amount: 33000 },
+          { item: "Watchman", amount: 15000 },
+          { item: "GHMC Garbage Collector", amount: 4000 },
+          { item: "Electrician", amount: 5000 },
+          { item: "Power Bill", amount: 50000 }
+        ]
+      },
+      amenities: [
+        { amenity: "Generator", status: "Operational", associationPoc: "Yet to update", vendorName: "Yet to update", vendorPhonenumber: "Yet to update" },
+        { amenity: "Softner", status: "Under Maintenance", associationPoc: "Yet to update", vendorName: "Yet to update", vendorPhonenumber: "Yet to update" },
+        { amenity: "Lift 1", status: "Operational", associationPoc: "Yet to update", vendorName: "Yet to update", vendorPhonenumber: "Yet to update" },
+        { amenity: "Lift 2", status: "Operational", associationPoc: "Yet to update", vendorName: "Yet to update", vendorPhonenumber: "Yet to update" },
+        { amenity: "STP", status: "Operational", associationPoc: "Yet to update", vendorName: "Yet to update", vendorPhonenumber: "Yet to update" },
+        { amenity: "Water Motor", status: "Operational", associationPoc: "Yet to update", vendorName: "Yet to update", vendorPhonenumber: "Yet to update" }
+      ],
+      amcDetails: [
+        { amenity: "Generator", endDate: "Yet to update", estimate: "Yet to update" },
+        { amenity: "Softner", endDate: "Yet to update", estimate: "Yet to update" },
+        { amenity: "Lift 1", endDate: "Yet to update", estimate: "Yet to update" },
+        { amenity: "Lift 2", endDate: "Yet to update", estimate: "Yet to update" }
+      ],
+      maintenance: {
+        headers: ["Flat No", "Total Due", "Softner Amount (15000)", "Gate App Amount (600)", "Emergency Fund (5000)", "Dues as of Sept 2026", "2026-10-01"],
+        rows: []
+      },
+      builder: {
+        headers: ["Total_Due", "Pool_Money", "Dues_as_of_Sept_2026", "October_2026", "November_2026", "December_2026"],
+        values: [1000000, 1000000, 0, 0, 0, 0]
+      },
+      directory: [],
+      quickHelp: [
+        { role: "Electrician", name: "Society Electrician", phone: "+91 95506 22907", icon: "⚡" },
+        { role: "Plumber", name: "External Plumber", phone: "+91 96963 22457", icon: "🔧" }
+      ],
+      meetings: {
+        headers: ["Flat_No", "Attended", "By-Laws Review Meeting (Nov 1, 2026)", "General Body Meeting (Nov 8, 2026)"],
+        rows: [],
+        notes: [{ date: "11 Oct 2026", notes: "Formal handover of community accounts and assets completed smoothly." }]
+      }
+    };
+
+    function initializeFlats() {
+      const flats = [];
+      for (let i = 1; i <= 9; i++) flats.push(`G${i}`);
+      for (let floor = 1; floor <= 5; floor++) {
+        for (let unit = 1; unit <= 11; unit++) {
+          flats.push(`${floor}${unit < 10 ? '0' + unit : unit}`);
+        }
+      }
+      masterData.maintenance.rows = flats.map(f => {
+        if (f === "101") return [f, 7500, 0, 0, 5000, 0, 2500];
+        return [f, 0, 0, 0, 0, 0, 0];
+      });
+      masterData.directory = flats.map(f => ({
+        flat: f, ownerName: "Yet to update", ownerPhone: "Yet to update",
+        occupiedBy: "Owner", tenantName: "-", tenantPhone: "-", vehicleNumbers: "Yet to update"
+      }));
+      masterData.meetings.rows = flats.map(f => [f, 0, "-", "-"]);
+    }
+    initializeFlats();
 
     function toggleMenu() {
       const drawer = document.getElementById('drawer-menu');
@@ -401,12 +563,10 @@
     }
 
     function showTab(tabName) {
-      const tabs = ['dashboard', 'maintenance', 'meetings', 'directory', 'quick-help', 'feedback'];
-      tabs.forEach(t => {
+      ['dashboard', 'maintenance', 'meetings', 'directory', 'quick-help', 'feedback'].forEach(t => {
         const el = document.getElementById(`tab-${t}`);
         if (el) el.classList.add('hidden');
       });
-
       const btnDash = document.getElementById('btn-tab-dashboard');
       const btnMaint = document.getElementById('btn-tab-maintenance');
       const btnMeet = document.getElementById('btn-tab-meetings');
@@ -423,61 +583,349 @@
       if (tabName === 'meetings' && btnMeet) btnMeet.className = "flex-1 py-2 text-xs font-bold rounded bg-indigo-600 text-white";
     }
 
-    function handleCategoryChange() {
-      const cat = document.getElementById('fb-type').value;
-      const flatInput = document.getElementById('fb-flat');
-      const flatReq = document.getElementById('fb-flat-req');
-
-      if (cat === "Feedback") {
-        flatInput.removeAttribute('required');
-        flatReq.innerText = "(Optional)";
-        flatReq.className = "text-slate-400 font-normal";
+    // PASSKEY & ADMIN MANAGEMENT
+    function promptPasskey() {
+      if (isAdmin) { exitAdminMode(); return; }
+      document.getElementById('input-passkey').value = '';
+      document.getElementById('passkey-error').classList.add('hidden');
+      document.getElementById('modal-passkey').classList.remove('hidden');
+      document.getElementById('input-passkey').focus();
+    }
+    function closePasskeyModal() { document.getElementById('modal-passkey').classList.add('hidden'); }
+    function verifyPasskey() {
+      if (document.getElementById('input-passkey').value === PASSKEY_SECRET) {
+        isAdmin = true;
+        closePasskeyModal();
+        activateAdminUI();
       } else {
-        flatInput.setAttribute('required', 'required');
-        flatReq.innerText = "*";
-        flatReq.className = "text-rose-500 font-bold";
+        document.getElementById('passkey-error').classList.remove('hidden');
+      }
+    }
+    function activateAdminUI() {
+      document.getElementById('admin-banner').classList.remove('hidden');
+      document.getElementById('btn-admin-toggle').className = "px-2.5 py-1 rounded-lg bg-amber-500 text-amber-950 font-extrabold text-xs flex items-center gap-1 shadow";
+      document.getElementById('admin-btn-icon').innerText = "🔓";
+      document.getElementById('admin-btn-text').innerText = "Admin On";
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+      renderAll();
+    }
+    function exitAdminMode() {
+      isAdmin = false;
+      document.getElementById('admin-banner').classList.add('hidden');
+      document.getElementById('btn-admin-toggle').className = "px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:text-white border border-slate-700 text-xs font-semibold flex items-center gap-1";
+      document.getElementById('admin-btn-icon').innerText = "✏️";
+      document.getElementById('admin-btn-text').innerText = "Edit";
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+      renderAll();
+    }
+
+    // CELL EDIT MODAL (With Column Index Support)
+    function openEditModal(sheetName, rowKey, columnName, currentValue, displayTitle, columnIndex) {
+      if (!isAdmin) return;
+      currentEditPayload = { sheetName, rowKey, columnName, columnIndex };
+      document.getElementById('modal-edit-sheet').innerText = sheetName.replace('_', ' ');
+      document.getElementById('modal-edit-key').innerText = rowKey;
+      document.getElementById('modal-edit-field').innerText = displayTitle || columnName;
+      document.getElementById('modal-edit-value').value = (currentValue === undefined || currentValue === null) ? "" : currentValue;
+      document.getElementById('modal-edit-cell').classList.remove('hidden');
+      document.getElementById('modal-edit-value').focus();
+    }
+    function closeEditModal() {
+      document.getElementById('modal-edit-cell').classList.add('hidden');
+      currentEditPayload = null;
+    }
+    async function saveCellEdit() {
+      if (!currentEditPayload) return;
+      const valInput = document.getElementById('modal-edit-value').value.trim();
+      const saveBtn = document.getElementById('btn-save-edit');
+      saveBtn.innerText = "Saving to Sheet...";
+      saveBtn.disabled = true;
+
+      // 1. Update in local memory and recalculate totals
+      applyLocalCellUpdate(currentEditPayload.sheetName, currentEditPayload.rowKey, currentEditPayload.columnName, valInput);
+
+      // 2. Dispatch fail-safe write-back to Google Sheet
+      await postAction({
+        action: "update_cell",
+        sheetName: currentEditPayload.sheetName,
+        rowKey: currentEditPayload.rowKey,
+        columnName: currentEditPayload.columnName,
+        columnIndex: currentEditPayload.columnIndex,
+        newValue: valInput
+      });
+
+      saveBtn.innerText = "Save Edit";
+      saveBtn.disabled = false;
+      closeEditModal();
+      renderAll();
+    }
+
+    function applyLocalCellUpdate(sheetName, rowKey, colName, newVal) {
+      if (sheetName === "Maintenance_Dues") {
+        const headers = masterData.maintenance.headers;
+        const colIdx = headers.findIndex(h => formatHeaderLabel(h).toLowerCase() === formatHeaderLabel(colName).toLowerCase());
+        const row = masterData.maintenance.rows.find(r => String(r[0]).trim() === String(rowKey).trim());
+        if (row && colIdx > -1) {
+          row[colIdx] = isNaN(Number(newVal)) || newVal === "" ? newVal : Number(newVal);
+          let sum = 0;
+          for (let c = 2; c < row.length; c++) {
+            const v = Number(row[c]);
+            if (!isNaN(v) && v > 0) sum += v;
+          }
+          row[1] = sum;
+        }
+      } else if (sheetName === "Dashboard_Finances") {
+        if (masterData.financials[rowKey]) {
+          masterData.financials[rowKey].value = isNaN(Number(newVal)) || newVal === "" ? newVal : Number(newVal);
+          const total = (Number(masterData.financials.ganesh_amount ? masterData.financials.ganesh_amount.value : 0) || 0) +
+                        (Number(masterData.financials.builder_amount ? masterData.financials.builder_amount.value : 0) || 0) +
+                        (Number(masterData.financials.maintenance_amount ? masterData.financials.maintenance_amount.value : 0) || 0);
+          if (masterData.financials.available_balance) masterData.financials.available_balance.value = total;
+        }
+      } else if (sheetName === "Expenses") {
+        const item = masterData.expenses.items.find(i => String(i.item).trim().toLowerCase() === String(rowKey).trim().toLowerCase());
+        if (item) {
+          item.amount = Number(newVal) || 0;
+          masterData.expenses.totalOverhead = masterData.expenses.items.reduce((sum, i) => sum + (Number(i.amount) || 0), 0);
+        }
+      } else if (sheetName === "Amenities_AMC") {
+        const amen = masterData.amenities.find(a => String(a.amenity).trim().toLowerCase() === String(rowKey).trim().toLowerCase());
+        if (amen) {
+          if (colName === "Status") amen.status = newVal;
+          else if (colName === "POC") amen.associationPoc = newVal;
+          else if (colName === "Vendor") amen.vendorName = newVal;
+          else if (colName === "Vendor_Phone") amen.vendorPhonenumber = newVal;
+        }
+        const amc = masterData.amcDetails.find(a => String(a.amenity).trim().toLowerCase() === String(rowKey).trim().toLowerCase());
+        if (amc) {
+          if (colName === "AMC_End_Date") amc.endDate = newVal;
+          else if (colName === "AMC_Estimate") amc.estimate = newVal;
+        }
+      } else if (sheetName === "Builder_Dues") {
+        const headers = masterData.builder.headers;
+        const colIdx = headers.findIndex(h => formatHeaderLabel(h).toLowerCase() === formatHeaderLabel(colName).toLowerCase());
+        if (colIdx > -1) {
+          masterData.builder.values[colIdx] = isNaN(Number(newVal)) || newVal === "" ? newVal : Number(newVal);
+          let sum = 0;
+          for (let c = 1; c < masterData.builder.values.length; c++) {
+            const v = Number(masterData.builder.values[c]);
+            if (!isNaN(v) && v > 0) sum += v;
+          }
+          masterData.builder.values[0] = sum;
+        }
+      } else if (sheetName === "Directory") {
+        const entry = masterData.directory.find(d => String(d.flat).trim() === String(rowKey).trim());
+        if (entry) {
+          if (colName === "Owner_Name") entry.ownerName = newVal;
+          else if (colName === "Owner_Phone") entry.ownerPhone = newVal;
+          else if (colName === "Occupied_By") entry.occupiedBy = newVal;
+          else if (colName === "Tenant_Name") entry.tenantName = newVal;
+          else if (colName === "Tenant_Phone") entry.tenantPhone = newVal;
+          else if (colName === "Vehicle_Numbers") entry.vehicleNumbers = newVal;
+        }
+      } else if (sheetName === "Meetings") {
+        const headers = masterData.meetings.headers;
+        const colIdx = headers.findIndex(h => h.trim().toLowerCase() === colName.trim().toLowerCase());
+        const row = masterData.meetings.rows.find(r => String(r[0]).trim() === String(rowKey).trim());
+        if (row && colIdx > -1) row[colIdx] = isNaN(Number(newVal)) || newVal === "" ? newVal : Number(newVal);
+        if (rowKey === "notes" && masterData.meetings.notes[0]) {
+          if (colName === "Meeting_Date") masterData.meetings.notes[0].date = newVal;
+          else if (colName === "Meeting_Notes") masterData.meetings.notes[0].notes = newVal;
+        }
+      } else if (sheetName === "Quick_Help") {
+        const q = masterData.quickHelp.find(item => String(item.role).trim().toLowerCase() === String(rowKey).trim().toLowerCase());
+        if (q) {
+          if (colName === "Title") q.name = newVal;
+          else if (colName === "Phone") q.phone = newVal;
+          else if (colName === "Icon") q.icon = newVal;
+        }
       }
     }
 
+    // UNIVERSAL ADD ENTRY HANDLER
+    function openAddEntryModal(type) {
+      if (!isAdmin) return;
+      currentAddType = type;
+      const modal = document.getElementById('modal-add-entry');
+      const title = document.getElementById('add-modal-title');
+      const icon = document.getElementById('add-modal-icon');
+      const fields = document.getElementById('add-modal-fields');
+
+      if (type === 'month_maint' || type === 'month_builder') {
+        icon.innerText = "📅";
+        title.innerText = type === 'month_maint' ? "Add Maintenance Month" : "Add Builder Month";
+        fields.innerHTML = `
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Month Header Title</label>
+            <input type="text" id="add-field-1" placeholder="e.g. Nov 2026 or Dec 2026" class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Default Initial Value</label>
+            <select id="add-field-2" class="w-full p-2 border rounded outline-none bg-white font-semibold">
+              <option value="0">0 (Displays as Paid)</option>
+              <option value="-">- (Unassigned / Not set)</option>
+              <option value="2500">2500 (Dues Pending)</option>
+            </select>
+          </div>`;
+      } else if (type === 'meeting') {
+        icon.innerText = "📅";
+        title.innerText = "Add Meeting to Attendance";
+        fields.innerHTML = `
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Meeting Title & Date</label>
+            <input type="text" id="add-field-1" placeholder="e.g. AGM Review (Nov 20, 2026)" class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Default Status for Flats</label>
+            <select id="add-field-2" class="w-full p-2 border rounded outline-none bg-white font-semibold">
+              <option value="-">- (Unmarked)</option>
+              <option value="Attended">Attended</option>
+              <option value="Absent">Absent</option>
+            </select>
+          </div>`;
+      } else if (type === 'meeting_note') {
+        icon.innerText = "📝";
+        title.innerText = "Add Meeting Minutes / Note";
+        fields.innerHTML = `
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Meeting Date</label>
+            <input type="text" id="add-field-1" placeholder="e.g. 15 Nov 2026" class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Meeting Notes</label>
+            <textarea id="add-field-2" rows="3" placeholder="Enter key decisions and notes..." class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-medium resize-none"></textarea>
+          </div>`;
+      } else if (type === 'contact') {
+        icon.innerText = "🆘";
+        title.innerText = "Add Quick Help Contact";
+        fields.innerHTML = `
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Role / Trade</label>
+            <input type="text" id="add-field-1" placeholder="e.g. Carpenter or Lift Agency" class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Name / Company</label>
+            <input type="text" id="add-field-2" placeholder="e.g. Sri Balaji Services" class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-semibold">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Phone Number</label>
+            <input type="text" id="add-field-3" placeholder="e.g. +91 98765 43210" class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-semibold font-mono">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Emoji Icon</label>
+            <input type="text" id="add-field-4" value="📞" class="w-full p-2 border rounded outline-none focus:ring-1 focus:ring-indigo-500 font-semibold">
+          </div>`;
+      }
+      modal.classList.remove('hidden');
+    }
+
+    function closeAddEntryModal() {
+      document.getElementById('modal-add-entry').classList.add('hidden');
+      currentAddType = null;
+    }
+
+    async function executeAddEntry() {
+      const btn = document.getElementById('btn-save-add-entry');
+      btn.innerText = "Saving to Sheet...";
+      btn.disabled = true;
+
+      const f1 = document.getElementById('add-field-1') ? document.getElementById('add-field-1').value.trim() : '';
+      const f2 = document.getElementById('add-field-2') ? document.getElementById('add-field-2').value.trim() : '';
+      const f3 = document.getElementById('add-field-3') ? document.getElementById('add-field-3').value.trim() : '';
+      const f4 = document.getElementById('add-field-4') ? document.getElementById('add-field-4').value.trim() : '';
+
+      if (currentAddType === 'month_maint' && f1) {
+        masterData.maintenance.headers.push(f1);
+        const val = f2 === "-" ? "-" : Number(f2) || 0;
+        masterData.maintenance.rows.forEach(r => {
+          r.push(val);
+          if (typeof val === "number" && val > 0) r[1] = (Number(r[1]) || 0) + val;
+        });
+        await postAction({ action: "add_month", sheetName: "Maintenance_Dues", monthHeader: f1, defaultValue: val });
+      } else if (currentAddType === 'month_builder' && f1) {
+        masterData.builder.headers.push(f1);
+        const val = Number(f2) || 0;
+        masterData.builder.values.push(val);
+        masterData.builder.values[0] = (Number(masterData.builder.values[0]) || 0) + val;
+        await postAction({ action: "add_month", sheetName: "Builder_Dues", monthHeader: f1, defaultValue: val });
+      } else if (currentAddType === 'meeting' && f1) {
+        masterData.meetings.headers.push(f1);
+        masterData.meetings.rows.forEach(r => r.push(f2 || "-"));
+        await postAction({ action: "add_meeting", meetingTitle: f1, defaultValue: f2 || "-" });
+      } else if (currentAddType === 'meeting_note' && f1) {
+        masterData.meetings.notes.push({ date: f1, notes: f2 });
+        await postAction({ action: "add_meeting_note", date: f1, notes: f2 });
+      } else if (currentAddType === 'contact' && f1) {
+        masterData.quickHelp.push({ role: f1, name: f2 || "-", phone: f3 || "-", icon: f4 || "📞" });
+        await postAction({ action: "add_contact", role: f1, name: f2 || "-", phone: f3 || "-", icon: f4 || "📞" });
+      }
+
+      btn.innerText = "Add Now";
+      btn.disabled = false;
+      closeAddEntryModal();
+      renderAll();
+    }
+
+    async function postAction(payload) {
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: "POST", mode: "no-cors",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+      } catch (err) { console.warn("Network action delayed:", err); }
+    }
+
+    // FORMATTERS
     function formatINR(val) {
-      if (val === undefined || val === null || val === "" || isNaN(Number(val))) {
-        return val || "₹0";
+      if (val === undefined || val === null || val === "" || isNaN(Number(val))) return val || "₹0";
+      return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 }).format(Number(val));
+    }
+    function formatHeaderLabel(header) {
+      if (!header) return "";
+      const str = String(header).trim();
+      if (str.match(/^\d{4}-\d{2}-\d{2}/)) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       }
-      return new Intl.NumberFormat('en-IN', { 
-        style: 'currency', 
-        currency: 'INR', 
-        currencyDisplay: 'narrowSymbol', 
-        maximumFractionDigits: 0 
-      }).format(Number(val));
+      return str;
     }
 
+    // SCREEN RENDERERS
     function renderDashboard(data) {
       if (data.financials) {
         const fin = data.financials;
-        if (fin.as_of_date) document.getElementById('fin-available-label').innerText = `${fin.as_of_date.label} ${fin.as_of_date.value}`;
+        if (fin.as_of_date) document.getElementById('fin-asof-date').innerText = `as of ${fin.as_of_date.value}`;
         if (fin.available_balance) document.getElementById('fin-available').innerText = formatINR(fin.available_balance.value);
-        if (fin.ganesh_amount) {
-          document.getElementById('label-fin-ganesh').innerText = fin.ganesh_amount.label;
-          document.getElementById('fin-breakdown-ganesh').innerText = formatINR(fin.ganesh_amount.value);
+        if (fin.ganesh_amount) document.getElementById('fin-breakdown-ganesh').innerText = formatINR(fin.ganesh_amount.value);
+        if (fin.builder_amount) document.getElementById('fin-breakdown-builder').innerText = formatINR(fin.builder_amount.value);
+        if (fin.maintenance_amount) document.getElementById('fin-breakdown-maintenance').innerText = formatINR(fin.maintenance_amount.value);
+
+        const dateEl = document.getElementById('fin-asof-date');
+        if (dateEl) {
+          if (isAdmin) dateEl.classList.add('edit-highlight');
+          else dateEl.classList.remove('edit-highlight');
         }
-        if (fin.builder_amount) {
-          document.getElementById('label-fin-builder').innerText = fin.builder_amount.label;
-          document.getElementById('fin-breakdown-builder').innerText = formatINR(fin.builder_amount.value);
-        }
-        if (fin.maintenance_amount) {
-          document.getElementById('label-fin-maint').innerText = fin.maintenance_amount.label;
-          document.getElementById('fin-breakdown-maintenance').innerText = formatINR(fin.maintenance_amount.value);
-        }
+        ['ganesh', 'builder', 'maint'].forEach(k => {
+          const el = document.getElementById(`box-fin-${k}`);
+          if (el) {
+            if (isAdmin) el.classList.add('edit-highlight');
+            else el.classList.remove('edit-highlight');
+          }
+        });
       }
 
       if (data.expenses && data.expenses.items) {
         const expContainer = document.getElementById('expenses-list-container');
         expContainer.innerHTML = '';
-        data.expenses.items.forEach(exp => {
+        data.expenses.items.forEach((exp, idx) => {
+          const editClass = isAdmin ? "edit-highlight px-1.5 py-0.5 rounded" : "";
           expContainer.innerHTML += `
             <div class="p-2.5 flex items-center justify-between hover:bg-slate-50">
               <span class="font-medium text-slate-700">${exp.item}</span>
-              <span class="font-bold text-slate-900 font-mono">${formatINR(exp.amount)}</span>
+              <span class="font-bold text-slate-900 font-mono ${editClass}" onclick="openEditModal('Expenses', '${exp.item}', 'Monthly_Amount', '${exp.amount}', '${exp.item} Monthly Amount', 2)">
+                ${formatINR(exp.amount)}
+              </span>
             </div>`;
         });
         const total = formatINR(data.expenses.totalOverhead);
@@ -490,39 +938,42 @@
         amBody.innerHTML = '';
         data.amenities.forEach(a => {
           const isMaint = a.status && a.status.toLowerCase().includes("maintenance");
+          const editClass = isAdmin ? "edit-highlight" : "";
           amBody.innerHTML += `
             <tr class="hover:bg-slate-50">
               <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${a.amenity}</td>
-              <td class="p-2.5 border-r border-slate-200">
+              <td class="p-2.5 border-r border-slate-200 ${editClass}" onclick="openEditModal('Amenities_AMC', '${a.amenity}', 'Status', '${a.status}', '${a.amenity} Status', 3)">
                 <span class="${isMaint ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-emerald-100 text-emerald-800 border-emerald-300'} border px-2 py-0.5 rounded font-semibold text-[10px]">${a.status}</span>
               </td>
-              <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.associationPoc || '-'}</td>
-              <td class="p-2.5 text-slate-500 italic border-r border-slate-200">${a.vendorName || '-'}</td>
-              <td class="p-2.5 text-slate-500 italic">${a.vendorPhonenumber || '-'}</td>
+              <td class="p-2.5 text-slate-600 border-r border-slate-200 ${editClass}" onclick="openEditModal('Amenities_AMC', '${a.amenity}', 'POC', '${a.associationPoc || ''}', '${a.amenity} Association POC', 4)">${a.associationPoc || '-'}</td>
+              <td class="p-2.5 text-slate-600 border-r border-slate-200 ${editClass}" onclick="openEditModal('Amenities_AMC', '${a.amenity}', 'Vendor', '${a.vendorName || ''}', '${a.amenity} Vendor Name', 5)">${a.vendorName || '-'}</td>
+              <td class="p-2.5 text-slate-600 ${editClass}" onclick="openEditModal('Amenities_AMC', '${a.amenity}', 'Vendor_Phone', '${a.vendorPhonenumber || ''}', '${a.amenity} Vendor Phone', 6)">${a.vendorPhonenumber || '-'}</td>
             </tr>`;
         });
       }
 
+      // AMC Details (Explicitly Excludes STP and Water Motor)
       if (data.amcDetails) {
         const amcBody = document.getElementById('amc-table-body');
         amcBody.innerHTML = '';
-        
-        // Excluded items that do not require AMC tracking
-        const excludedAmenities = ["stp", "water motor"];
+        const amcFiltered = data.amcDetails.filter(item => {
+          const name = (item.amenity || "").trim().toLowerCase();
+          return name !== "stp" && name !== "water motor" && item.endDate !== "-" && item.estimate !== "-";
+        });
 
-        data.amcDetails
-          .filter(item => {
-            const name = (item.amenity || "").trim().toLowerCase();
-            return !excludedAmenities.some(ex => name.includes(ex));
-          })
-          .forEach(item => {
-            amcBody.innerHTML += `
-              <tr class="hover:bg-slate-50">
-                <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${item.amenity}</td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-500 italic"><span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px]">${item.endDate}</span></td>
-                <td class="p-2.5 text-slate-500 italic"><span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px]">${item.estimate}</span></td>
-              </tr>`;
-          });
+        amcFiltered.forEach(item => {
+          const editClass = isAdmin ? "edit-highlight" : "";
+          amcBody.innerHTML += `
+            <tr class="hover:bg-slate-50">
+              <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200">${item.amenity}</td>
+              <td class="p-2.5 border-r border-slate-200 ${editClass}" onclick="openEditModal('Amenities_AMC', '${item.amenity}', 'AMC_End_Date', '${item.endDate || ''}', '${item.amenity} AMC End Date', 7)">
+                <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-mono">${item.endDate}</span>
+              </td>
+              <td class="p-2.5 text-slate-600 ${editClass}" onclick="openEditModal('Amenities_AMC', '${item.amenity}', 'AMC_Estimate', '${item.estimate || ''}', '${item.amenity} AMC Estimate', 8)">
+                <span class="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-mono">${item.estimate}</span>
+              </td>
+            </tr>`;
+        });
       }
     }
 
@@ -533,14 +984,13 @@
       let headerHtml = '';
 
       headers.forEach((h, idx) => {
+        const formatted = formatHeaderLabel(h);
         if (idx === 0) {
-          headerHtml += `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">${h}</th>`;
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 sticky-col-0 text-left">${formatted}</th>`;
         } else if (idx === 1) {
-          headerHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[90px] text-right bg-slate-850 text-indigo-100">${h}</th>`;
-        } else if (idx >= 2 && idx <= 5) {
-          headerHtml += `<th class="p-2 border-r border-slate-700 min-w-[125px] bg-slate-850 text-indigo-200">${h}</th>`;
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 sticky-col-1 text-right text-indigo-100">${formatted}</th>`;
         } else {
-          headerHtml += `<th class="p-2 border-r border-slate-700 min-w-[105px]">${h}</th>`;
+          headerHtml += `<th class="p-2 border-r border-slate-700 min-w-[110px] text-indigo-100 font-bold">${formatted}</th>`;
         }
       });
       headerRow.innerHTML = headerHtml;
@@ -550,32 +1000,43 @@
       let grandTotalDue = 0;
 
       rows.forEach(r => {
+        const flatNo = r[0];
         const totalDueVal = Number(r[1]) || 0;
         grandTotalDue += totalDueVal;
 
         bodyHtml += `<tr class="hover:bg-slate-50">`;
         r.forEach((cellVal, idx) => {
           if (idx === 0) {
-            bodyHtml += `<td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">${cellVal}</td>`;
+            bodyHtml += `<td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-col-0 text-left">${cellVal}</td>`;
           } else if (idx === 1) {
             const isDue = Number(cellVal) > 0;
-            bodyHtml += `<td class="p-2.5 font-bold border-r border-slate-200 text-right ${isDue ? 'text-rose-600' : 'text-emerald-600'}">${formatINR(cellVal)}</td>`;
+            bodyHtml += `<td class="p-2.5 font-bold border-r border-slate-200 sticky-col-1 text-right font-mono ${isDue ? 'text-rose-600' : 'text-emerald-600'}">${formatINR(cellVal)}</td>`;
           } else {
-            let display = cellVal;
-            if (cellVal === "0" || cellVal === 0 || cellVal === "") {
-              display = idx === 6 ? `<span class="text-emerald-600 font-bold">Paid</span>` : `<span class="text-slate-300">-</span>`;
-            } else if (!isNaN(Number(cellVal)) && Number(cellVal) > 0) {
-              display = `<span class="text-rose-600 font-bold">${formatINR(cellVal)}</span>`;
+            const strVal = String(cellVal).trim();
+            const numVal = Number(cellVal);
+            const isPaid = strVal.toLowerCase() === "paid" || strVal === "0" || cellVal === 0;
+            const isNumberPositive = !isNaN(numVal) && numVal > 0 && strVal !== "";
+
+            let displayBadge = `<span class="text-slate-300">-</span>`;
+            if (isPaid) {
+              displayBadge = `<span class="bg-emerald-100 border border-emerald-300 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Paid</span>`;
+            } else if (isNumberPositive) {
+              displayBadge = `<span class="text-rose-600 font-bold font-mono">${formatINR(numVal)}</span>`;
+            } else if (strVal && strVal !== "-") {
+              displayBadge = `<span class="text-slate-700 font-semibold">${strVal}</span>`;
             }
-            bodyHtml += `<td class="p-2 border-r border-slate-200">${display}</td>`;
+
+            const editClass = isAdmin ? "edit-highlight" : "";
+            const headerName = headers[idx];
+            bodyHtml += `<td class="p-2 border-r border-slate-200 ${editClass}" onclick="openEditModal('Maintenance_Dues', '${flatNo}', '${headerName}', '${cellVal}', '${formatHeaderLabel(headerName)}', ${idx + 1})">${displayBadge}</td>`;
           }
         });
         bodyHtml += `</tr>`;
       });
-
       body.innerHTML = bodyHtml;
       document.getElementById('maint-grand-total-due').innerText = formatINR(grandTotalDue);
 
+      // Builder Section
       if (data.builder) {
         const bHeaders = data.builder.headers || [];
         const bVals = data.builder.values || [];
@@ -584,20 +1045,23 @@
 
         let bHeaderHtml = '';
         bHeaders.forEach((h, idx) => {
-          bHeaderHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[110px] ${idx === 0 ? 'text-right text-indigo-100' : ''}">${h}</th>`;
+          bHeaderHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[110px] ${idx === 0 ? 'text-right text-indigo-100' : ''}">${formatHeaderLabel(h)}</th>`;
         });
         bHeaderRow.innerHTML = bHeaderHtml;
 
         let bBodyHtml = `<tr class="bg-amber-50/50 hover:bg-amber-100/50 font-semibold">`;
         bVals.forEach((val, idx) => {
           const num = Number(val);
+          const colHeader = bHeaders[idx] || "";
+          const editClass = (isAdmin && idx > 0) ? "edit-highlight" : "";
+
           if (idx === 0) {
-            bBodyHtml += `<td class="p-2.5 border-r border-amber-200 text-right font-black text-amber-950">${formatINR(val)}</td>`;
+            bBodyHtml += `<td class="p-2.5 border-r border-amber-200 text-right font-black text-amber-950 font-mono">${formatINR(val)}</td>`;
             document.getElementById('builder-grand-total-due').innerText = formatINR(val);
           } else if (!isNaN(num) && num > 0) {
-            bBodyHtml += `<td class="p-2.5 border-r border-amber-200 text-amber-900 font-bold">${formatINR(val)}</td>`;
+            bBodyHtml += `<td class="p-2.5 border-r border-amber-200 text-amber-900 font-bold font-mono ${editClass}" onclick="openEditModal('Builder_Dues', 'row2', '${colHeader}', '${val}', 'Builder ${formatHeaderLabel(colHeader)}', ${idx + 1})">${formatINR(val)}</td>`;
           } else {
-            bBodyHtml += `<td class="p-2.5 border-r border-slate-200 text-slate-400">${val === "0" || val === 0 ? 'Paid' : val}</td>`;
+            bBodyHtml += `<td class="p-2.5 border-r border-slate-200 ${editClass}" onclick="openEditModal('Builder_Dues', 'row2', '${colHeader}', '${val}', 'Builder ${formatHeaderLabel(colHeader)}', ${idx + 1})"><span class="bg-emerald-100 border border-emerald-300 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">Paid</span></td>`;
           }
         });
         bBodyHtml += `</tr>`;
@@ -613,9 +1077,9 @@
       let headerHtml = '';
       headers.forEach((h, idx) => {
         if (idx === 0) {
-          headerHtml += `<th class="p-2.5 border-r border-slate-700 sticky-left bg-slate-900 text-left min-w-[70px]">${h}</th>`;
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 sticky-col-0 text-left">${h}</th>`;
         } else if (idx === 1) {
-          headerHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[75px] text-right bg-slate-850 text-indigo-100">${h}</th>`;
+          headerHtml += `<th class="p-2.5 border-r border-slate-700 min-w-[75px] text-right text-indigo-100">${h}</th>`;
         } else {
           headerHtml += `<th class="p-2 border-r border-slate-700 min-w-[150px] text-center font-bold">${h}</th>`;
         }
@@ -625,14 +1089,17 @@
       const body = document.getElementById('meetings-table-body');
       let bodyHtml = '';
       rows.forEach(r => {
+        const flatNo = r[0];
         bodyHtml += `<tr class="hover:bg-slate-50">`;
         r.forEach((cellVal, idx) => {
           if (idx === 0) {
-            bodyHtml += `<td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white text-left">${cellVal}</td>`;
+            bodyHtml += `<td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-col-0 text-left">${cellVal}</td>`;
           } else if (idx === 1) {
-            bodyHtml += `<td class="p-2.5 font-bold border-r border-slate-200 text-right text-slate-700 font-mono">${cellVal}/${headers.length - 2}</td>`;
+            const editClass = isAdmin ? "edit-highlight" : "";
+            bodyHtml += `<td class="p-2.5 font-bold border-r border-slate-200 text-right text-slate-700 font-mono ${editClass}" onclick="openEditModal('Meetings', '${flatNo}', 'Attended', '${cellVal}', 'Flat ${flatNo} Attended', 2)">${cellVal}/${headers.length - 2}</td>`;
           } else {
-            bodyHtml += `<td class="p-2 border-r border-slate-200 text-slate-400 font-medium">${cellVal}</td>`;
+            const editClass = isAdmin ? "edit-highlight" : "";
+            bodyHtml += `<td class="p-2 border-r border-slate-200 text-slate-600 font-medium ${editClass}" onclick="openEditModal('Meetings', '${flatNo}', '${headers[idx]}', '${cellVal}', 'Flat ${flatNo} Attendance', ${idx + 1})">${cellVal}</td>`;
           }
         });
         bodyHtml += `</tr>`;
@@ -641,11 +1108,14 @@
 
       const notesBody = document.getElementById('meeting-notes-body');
       notesBody.innerHTML = '';
-      (notes || []).forEach(n => {
+      (notes || []).forEach((n, nIdx) => {
+        const editClass = isAdmin ? "edit-highlight" : "";
         notesBody.innerHTML += `
           <tr class="hover:bg-slate-50">
-            <td class="p-2.5 border-r border-slate-200 align-top"><span class="bg-slate-100 border border-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold whitespace-nowrap">${n.date}</span></td>
-            <td class="p-2.5 text-slate-800 leading-relaxed text-[11px]">${n.notes}</td>
+            <td class="p-2.5 border-r border-slate-200 align-top ${editClass}" onclick="openEditModal('Meetings', 'notes', 'Meeting_Date', '${n.date}', 'Meeting Date')">
+              <span class="bg-slate-100 border border-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-mono text-[10px] font-semibold whitespace-nowrap">${n.date}</span>
+            </td>
+            <td class="p-2.5 text-slate-800 leading-relaxed text-[11px] ${editClass}" onclick="openEditModal('Meetings', 'notes', 'Meeting_Notes', '${n.notes.replace(/'/g, "\\'")}', 'Meeting Notes')">${n.notes}</td>
           </tr>`;
       });
     }
@@ -654,22 +1124,22 @@
       if (!data.directory) return;
       const dirBody = document.getElementById('directory-table-body');
       dirBody.innerHTML = '';
-
       data.directory.forEach(item => {
         const isTenant = item.occupiedBy && item.occupiedBy.toLowerCase() === "tenant";
         const occBadge = isTenant 
           ? `<span class="bg-amber-100 border border-amber-300 text-amber-800 px-1.5 py-0.5 rounded text-[10px] font-semibold">Tenant</span>`
           : `<span class="bg-blue-100 border border-blue-300 text-blue-800 px-1.5 py-0.5 rounded text-[10px] font-semibold">Owner</span>`;
+        const editClass = isAdmin ? "edit-highlight" : "";
 
         dirBody.innerHTML += `
           <tr class="hover:bg-slate-50">
-            <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-left bg-white">${item.flat}</td>
-            <td class="p-2.5 border-r border-slate-200 font-medium">${item.ownerName}</td>
-            <td class="p-2.5 border-r border-slate-200 text-slate-600 font-mono text-[11px]">${item.ownerPhone}</td>
-            <td class="p-2.5 border-r border-slate-200 text-center">${occBadge}</td>
-            <td class="p-2.5 border-r border-slate-200 ${item.tenantName === '-' ? 'text-slate-400 text-center' : 'font-medium'}">${item.tenantName}</td>
-            <td class="p-2.5 border-r border-slate-200 text-slate-600 font-mono text-[11px] ${item.tenantPhone === '-' ? 'text-slate-400 text-center' : ''}">${item.tenantPhone}</td>
-            <td class="p-2.5 text-slate-600 italic text-[11px]">${item.vehicleNumbers}</td>
+            <td class="p-2.5 font-bold text-slate-900 border-r border-slate-200 sticky-col-0">${item.flat}</td>
+            <td class="p-2.5 border-r border-slate-200 font-medium ${editClass}" onclick="openEditModal('Directory', '${item.flat}', 'Owner_Name', '${item.ownerName}', 'Owner Name', 2)">${item.ownerName}</td>
+            <td class="p-2.5 border-r border-slate-200 text-slate-600 font-mono text-[11px] ${editClass}" onclick="openEditModal('Directory', '${item.flat}', 'Owner_Phone', '${item.ownerPhone}', 'Owner Phone', 3)">${item.ownerPhone}</td>
+            <td class="p-2.5 border-r border-slate-200 text-center ${editClass}" onclick="openEditModal('Directory', '${item.flat}', 'Occupied_By', '${item.occupiedBy}', 'Occupied By', 4)">${occBadge}</td>
+            <td class="p-2.5 border-r border-slate-200 ${item.tenantName === '-' ? 'text-slate-400 text-center' : 'font-medium'} ${editClass}" onclick="openEditModal('Directory', '${item.flat}', 'Tenant_Name', '${item.tenantName}', 'Tenant Name', 5)">${item.tenantName}</td>
+            <td class="p-2.5 border-r border-slate-200 text-slate-600 font-mono text-[11px] ${item.tenantPhone === '-' ? 'text-slate-400 text-center' : ''} ${editClass}" onclick="openEditModal('Directory', '${item.flat}', 'Tenant_Phone', '${item.tenantPhone}', 'Tenant Phone', 6)">${item.tenantPhone}</td>
+            <td class="p-2.5 text-slate-600 italic text-[11px] ${editClass}" onclick="openEditModal('Directory', '${item.flat}', 'Vehicle_Numbers', '${item.vehicleNumbers}', 'Vehicles', 7)">${item.vehicleNumbers}</td>
           </tr>`;
       });
     }
@@ -678,122 +1148,146 @@
       if (!data.quickHelp) return;
       const container = document.getElementById('quick-help-list');
       container.innerHTML = '';
-
       data.quickHelp.forEach(c => {
         const cleanNumber = (c.phone || '').replace(/[^0-9+]/g, '');
+        const editClass = isAdmin ? "edit-highlight p-1 rounded" : "";
         container.innerHTML += `
           <div class="border border-slate-200 rounded-lg p-3 bg-slate-50 flex items-center justify-between shadow-xs">
             <div class="flex items-center gap-3">
-              <span class="text-2xl">${c.icon || '📞'}</span>
+              <span class="text-2xl cursor-pointer ${isAdmin ? 'edit-highlight rounded p-1' : ''}" onclick="openEditModal('Quick_Help', '${c.role}', 'Icon', '${c.icon || '📞'}', '${c.role} Icon', 4)">${c.icon || '📞'}</span>
               <div>
                 <span class="text-xs font-bold text-slate-900 block">${c.role}</span>
-                <span class="text-[11px] text-slate-600 block">${c.name}</span>
-                <span class="text-[11px] font-mono text-slate-700 font-semibold block mt-0.5">${c.phone}</span>
+                <span class="text-[11px] text-slate-600 block ${editClass}" onclick="openEditModal('Quick_Help', '${c.role}', 'Title', '${c.name}', '${c.role} Title', 2)">${c.name}</span>
+                <span class="text-[11px] font-mono text-slate-700 font-semibold block mt-0.5 ${editClass}" onclick="openEditModal('Quick_Help', '${c.role}', 'Phone', '${c.phone}', '${c.role} Phone', 3)">${c.phone}</span>
               </div>
             </div>
-            <a href="tel:${cleanNumber}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs flex items-center gap-1 shadow-xs transition-colors">
-              <span>📞</span> Call
-            </a>
+            <a href="tel:${cleanNumber}" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-bold text-xs flex items-center gap-1 shadow-xs transition-colors"><span>📞</span> Call</a>
           </div>`;
       });
+    }
+
+    function renderAll() {
+      renderDashboard(masterData);
+      renderMaintenance(masterData);
+      renderMeetings(masterData);
+      renderDirectory(masterData);
+      renderQuickHelp(masterData);
+    }
+
+    function handleCategoryChange() {
+      const cat = document.getElementById('fb-type').value;
+      const flatInput = document.getElementById('fb-flat');
+      const flatReq = document.getElementById('fb-flat-req');
+      if (cat === "Feedback") {
+        flatInput.removeAttribute('required');
+        flatReq.innerText = "(Optional)";
+        flatReq.className = "text-slate-400 font-normal";
+      } else {
+        flatInput.setAttribute('required', 'required');
+        flatReq.innerText = "*";
+        flatReq.className = "text-rose-500 font-bold";
+      }
     }
 
     async function handleFeedbackSubmit(e) {
       e.preventDefault();
       const btn = document.getElementById('fb-btn');
       const status = document.getElementById('fb-status');
-
-      const payload = {
-        type: document.getElementById('fb-type').value,
-        flat: document.getElementById('fb-flat').value.trim() || "-",
-        message: document.getElementById('fb-message').value.trim()
-      };
-
       btn.disabled = true;
-      btn.innerText = "Submitting to sheet...";
+      btn.innerText = "Submitting to committee...";
 
       try {
-        await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
+        await postAction({
+          type: document.getElementById('fb-type').value,
+          flat: document.getElementById('fb-flat').value.trim() || "-",
+          message: document.getElementById('fb-message').value.trim()
         });
-
         document.getElementById('feedback-form').reset();
         handleCategoryChange();
-        status.innerText = "✅ Recorded successfully! Your submission has been saved directly to committee records.";
+        status.innerText = "✅ Submission saved directly to society records!";
         status.className = "text-center text-xs p-2.5 rounded font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300";
         status.classList.remove('hidden');
       } catch (err) {
-        status.innerText = "❌ Could not reach Google Sheets. Please check your connection.";
+        status.innerText = "❌ Could not record feedback. Please check connection.";
         status.className = "text-center text-xs p-2.5 rounded font-semibold bg-rose-100 text-rose-800 border border-rose-300";
         status.classList.remove('hidden');
       } finally {
         btn.disabled = false;
-        btn.innerText = "Submit";
+        btn.innerText = "Submit to Association";
       }
     }
 
-    // iframe Bridge Loader: Completely immune to CORS & redirect restrictions
+    // TRIPLE-ENGINE LIVE DATA FETCHER (Direct fetch + JSONP + Iframe bridge)
     function fetchSheetData(url) {
-      return new Promise((resolve, reject) => {
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
+  return new Promise((resolve) => {
+    let isDone = false;
+    const cacheBuster = `t=${Date.now()}`;
+    const separator = url.indexOf('?') >= 0 ? '&' : '?';
 
-        const timer = setTimeout(() => {
-          cleanup();
-          reject(new Error("Loading timed out from Google Sheets. Check script permissions."));
-        }, 25000);
+    const timer = setTimeout(() => {
+      if (!isDone) {
+        isDone = true;
+        updateSyncDot(false);
+        resolve(null);
+      }
+    }, 10000);
 
-        function cleanup() {
-          clearTimeout(timer);
-          window.removeEventListener('message', handleMessage);
-          if (iframe.parentNode) {
-            iframe.parentNode.removeChild(iframe);
-          }
-        }
-
-        function handleMessage(event) {
-          let payload = event.data;
-
-          if (typeof payload === 'string') {
-            try {
-              payload = JSON.parse(payload);
-            } catch (e) {
-              return;
-            }
-          }
-
-          if (payload && (payload.financials || payload.maintenance || payload.directory || payload.status === "success")) {
-            console.log("Sheet data received successfully:", payload);
-            cleanup();
-            resolve(payload);
-          }
-        }
-
-        window.addEventListener('message', handleMessage, false);
-
-        const separator = url.indexOf('?') >= 0 ? '&' : '?';
-        iframe.src = `${url}${separator}bridge=1`;
-
-        document.body.appendChild(iframe);
-      });
+    function handleSuccess(payload) {
+      if (!isDone && payload && (payload.maintenance || payload.financials || payload.status === "success")) {
+        isDone = true;
+        clearTimeout(timer);
+        updateSyncDot(true);
+        resolve(payload);
+      }
     }
 
-    // App Initialization
+    // Engine 1: JSONP (Bypasses CORS restrictions completely)
+    const callbackName = 'portal_cb_' + Math.floor(Math.random() * 1000000);
+    window[callbackName] = function(data) {
+      handleSuccess(data);
+      try { delete window[callbackName]; } catch(e) {}
+      if (jsonpScript && jsonpScript.parentNode) jsonpScript.parentNode.removeChild(jsonpScript);
+    };
+    const jsonpScript = document.createElement('script');
+    jsonpScript.src = `${url}${separator}callback=${callbackName}&${cacheBuster}`;
+    jsonpScript.onerror = () => {
+      console.warn("JSONP load failed");
+    };
+    document.head.appendChild(jsonpScript);
+
+    // Engine 2: Direct Fetch fallback
+    fetch(`${url}${separator}${cacheBuster}`)
+      .then(res => res.json())
+      .then(data => handleSuccess(data))
+      .catch(err => console.warn("Fetch fallback notice:", err.message));
+  });
+}
+
+    // Minimal Green/Red Sync Dot
+    function updateSyncDot(isLive) {
+      const dot = document.getElementById('sync-dot');
+      if (dot) {
+        if (isLive) {
+          dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm ml-1 inline-block";
+          dot.title = "Connected: Live Google Sheet Synced";
+        } else {
+          dot.className = "w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm ml-1 inline-block";
+          dot.title = "Offline / Using Cached Data";
+        }
+      }
+    }
+
     async function init() {
       const loader = document.getElementById('loading-overlay');
+      renderAll();
       try {
-        const data = await fetchSheetData(APPS_SCRIPT_URL);
-
-        renderDashboard(data);
-        renderMaintenance(data);
-        renderMeetings(data);
-        renderDirectory(data);
-        renderQuickHelp(data);
+        const liveData = await fetchSheetData(APPS_SCRIPT_URL);
+        if (liveData && liveData.maintenance && liveData.maintenance.rows && liveData.maintenance.rows.length > 0) {
+          masterData = liveData;
+          renderAll();
+        }
       } catch (err) {
-        console.error("Failed to load Google Sheet data:", err);
+        console.warn("Using master local database:", err);
       } finally {
         if (loader) loader.classList.add('hidden');
       }
